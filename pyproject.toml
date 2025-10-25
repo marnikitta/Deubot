@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "python-telegram-bot>=21.0",
-    "openai>=1.0.0",
+    "openai>=2.6.1",
 ]
 
 [tool.uv]
@@ -14,4 +14,5 @@ dev-dependencies = [
     "mypy>=1.0",
     "black>=23.0",
     "flake8>=6.0",
+    "pytest>=8.0",
 ]

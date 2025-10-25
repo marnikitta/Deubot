@@ -3,6 +3,9 @@ host := deubot
 run:
 	uv run python -m deubot.main
 
+test:
+	uv run pytest -v
+
 lint:
 	uv run mypy --check-untyped-defs deubot
 	uv run black --line-length 120 deubot
@@ -16,6 +19,6 @@ deploy: push
 	ssh -T $(host) "journalctl --user-unit=deubot.service --no-pager | tail -n 20"
 
 
-.PHONY: run lint deploy
+.PHONY: run test lint deploy
 
 

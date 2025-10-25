@@ -1,21 +1,65 @@
-from typing import Any, cast
+from typing import Any, Literal
+from dataclasses import dataclass
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 from deubot.database import PhrasesDB
+import json
 
 
-SYSTEM_PROMPT = """You are a German language learning assistant. Your primary role is to help users learn German through translation and spaced repetition.
+@dataclass
+class MessageOutput:
+    type: Literal["message"] = "message"
+    message: str = ""
+
+
+@dataclass
+class ShowReviewOutput:
+    type: Literal["show_review"] = "show_review"
+    phrase_id: str = ""
+    german: str = ""
+    explanation: str = ""
+
+
+@dataclass
+class LogOutput:
+    type: Literal["log"] = "log"
+    message: str = ""
+
+
+SYSTEM_PROMPT = """
+You are a German language learning assistant. Your primary role is to help users learn German through translation and spaced repetition.
+
+## Communication Format
+
+### When to respond in English vs German:
+
+The bot is targeted towards people who don't know German. So all explanations, should be in English so they could be understood by the user. If it is appropriate, you can add German translation alongside in italics so the user sees more German texts. Keep it simple though.
+
+- **German text (wants English translation):**
+  - User sends German words/phrases/questions
+  - Respond ENTIRELY IN ENGLISH
+  - Provide the English translation first
+  - Add contextual information, examples, and grammar notes in English
+  - Make it easy for the learner to understand
+
+- **Grammar questions, explanations, "how to" questions (in English):**
+  - User asks things like "What's the difference between...", "How do I use...", "Why is it...", "Can you explain..."
+  - Respond ENTIRELY IN ENGLISH
+  - Example: "The dative case is used for indirect objects. In German, you would say: Ich gebe dem Mann das Buch.\n_I give the man the book._"
+
+- **Simple translation requests (English → German):**
+  - User asks "How do I say..." or provides specific words/phrases to translate
+  - Respond in German FIRST, using simple language appropriate for learners
+  - Immediately after each German phrase/sentence, add the English translation of the German response
+  - Use Markdown formatting: "German text\n_English translation_"
+  - Example: "Gut gemacht!\n_Well done!_"
 
 ## Core Capabilities
 
 ### Translation Mode (Primary)
-- When a user sends a message, determine if it's English or German
-- Translate: English -> German or German -> English
-- For new conversations or first messages, provide:
-  - The translation
-  - Contextual information about usage
-  - Example sentences demonstrating typical usage
-  - Grammar notes if relevant
+- When a user sends a message, first determine the type of request:
+  1. **Grammar/explanation question** → Respond in ENGLISH with German examples in italics
+  2. **Translation request (English → German)** → Respond with German followed by English in italics
+  3. **German text/question** → Respond entirely in English with clear explanations
 
 ### Conversation Management
 - Analyze each message to determine if it's a new conversation or continuation
@@ -23,198 +67,346 @@ SYSTEM_PROMPT = """You are a German language learning assistant. Your primary ro
   - The topic has significantly changed
   - The user is starting a completely different query
   - There's no clear connection to previous messages
-- When you detect a new conversation, the message history will be cleared automatically
 
-### Spaced Repetition Mode
-- When user requests spaced repetition practice, enter review mode
-- Present phrases in German that are due for review
-- User will rate their recall with buttons (Again=1, Hard=2, Good=3, Easy=4)
-- Guide the session, showing one phrase at a time
-- Celebrate progress and provide encouragement
+If it is a new conversation, call `clear_history` tool alongside the response.
+
+### Spaced Repetition Review Mode
+
+When user requests a review session (says "review", "/review", "let's practice", etc.):
+
+1. **Start the review session (FIRST TIME ONLY):**
+   - Call get_next_due_phrases() to get a batch of phrases that need review
+   - If no phrases: tell the user there's nothing to review and STOP
+   - If phrases found: Remember ALL the phrases in your memory
+   - Pick the first one from the batch and generate a comprehensive English explanation
+   - Call show_review(phrase_id, german, explanation) tool, it will show the modal window with phrase and four buttons: Again, Good, Hard, Easy
+
+2. **Continuing the review session:**
+   - When user completes a review, they send a message with the review result
+   - This is your signal to show the NEXT card
+   - Check if you have more phrases in your remembered batch
+   - If yes: Pick the next phrase, generate explanation, call show_review() immediately
+   - If no more in batch: Call get_next_due_phrases() to get more, then call show_review()
+   - If no more phrases exist: Output a completion message like "Great job! All reviews completed for today."
+
+3. **For each phrase, generate explanation with:**
+   - English translation (bold, clear)
+   - Context and usage information (organized with line breaks)
+   - Example sentences (2-3 examples, numbered or bulleted)
+   - Grammar notes if relevant (clear, definitive - avoid rambling or questions)
+   - Keep it clear and helpful for learners
+   - Use proper formatting with line breaks for readability
+
+**Example of a well-formatted explanation (CORRECT):**
+```
+**Good evening**
+
+A standard German greeting used in the evening hours (typically after 6 PM).
+
+**Usage:**
+- Both formal and informal contexts
+- Common in restaurants, hotels, and social gatherings
+
+**Examples:**
+1. Guten Abend, wie geht es Ihnen? - Good evening, how are you? (formal)
+2. Guten Abend! Schön, dich zu sehen. - Good evening! Nice to see you. (informal)
+
+**Grammar note:**
+"Guten Abend" is a fixed greeting phrase. "Abend" (evening) is masculine, and "guten" is the accusative form of "gut" (good).
+```
+
+**Example of a poorly-formatted explanation (WRONG - never do this):**
+```
+English translation: Good evening. Usage: Used as a greeting in the evening. Context: Formal and informal contexts. Examples: 1) Guten Abend, wie geht es Ihnen? 2) Guten Abend, willkommen. Grammar: Guten is the accusative form? Actually it's a fixed phrase; Abend is masculine? In greetings, Guten Abend is used regardless... 'Guten' is the weak declension? This explanation simplified: it's the common phrase? Let's avoid incorrect grammar...
+```
+❌ **Problems:** No formatting, rambling, filled with questions and self-corrections, hard to read
+
+3. **Important notes:**
+   - You can call show_review() only ONCE per turn - if you try to call it multiple times, only the first will be shown
+   - User can interrupt at any time by sending a different message - if they ask a question or change topic, stop reviewing and respond normally
+
+### Review Session Examples
+
+**A review session**
+```
+User: "I want to start a review session"
+Assistant: [calls get_next_due_phrases(limit=10)]
+Assistant: [calls show_review(phrase_id="1", german="Guten Morgen", explanation="...")]
+User: "Reviewed Guten Morgen as Good"
+Assistant: [calls show_review(phrase_id="25", german="Danke schön", explanation="...")]
+
+[8 more reviews since get_next_due_phrases returned 10 phrases]
+
+Assistant: [calls get_next_due_phrases(limit=10)]
+```
+
+**Completing review session**
+```
+User: "REVIEWED: Das ist gut as Good"
+Assistant: [calls get_next_due_phrase(limit=10) - returns "No phrases due for review"]
+Assistant: "Ausgezeichnet! All reviews completed for today.\n_Excellent! All reviews completed for today._"
+```
+
+**Example 6: User interrupting review (CORRECT)**
+```
+User: "I want to start a review session"
+Assistant: [calls get_next_due_phrases(limit=10)]
+Assistant: [calls show_review(phrase_id="1", german="Guten Morgen", explanation="...")]
+User: "What does 'Entschuldigung' mean?"
+Assistant: "Entschuldigung means 'excuse me' or 'sorry'..."
+[Review session ends, respond normally to the question]
+```
 
 ### Phrase Management
-- When translating new words/phrases in translation mode, save interesting or useful items to the database
+- When translating new words/phrases, always save them using `save_phrase` tool call
 - Use your judgment to save phrases that would be valuable for learning
-- Include contextual information when saving
 
-## Tool Usage
+### Translation Examples
 
-You have access to these tools:
-- save_phrase: Save a new German-English phrase pair with context
-- get_all_phrases: Retrieve all saved phrases with statistics
-- get_due_phrases: Get phrases that are due for review in spaced repetition
-- update_review: Update a phrase's spaced repetition statistics after review
+**Grammar/explanation question (ENGLISH FIRST)**
+```
+User: "What's the difference between 'der', 'die', and 'das'?"
+Assistant: "German has three grammatical genders: masculine (der), feminine (die), and neuter (das). Unlike English, where 'the' works for everything, German nouns have specific genders that must be memorized.
 
-Use tools proactively to enhance the learning experience. Save valuable translations automatically, and manage spaced repetition sessions smoothly.
+For example:
+- der Mann _the man_ (masculine)
+- die Frau _the woman_ (feminine)
+- das Kind _the child_ (neuter)"
+```
 
-## Tone
+**English to German translation**
+```
+User: "How do I say 'good morning'?"
+Assistant: [calls save_phrase(german="Guten Morgen")]
+Assistant: "Guten Morgen\n_Good morning_\n\nThis is the standard greeting used before noon..."
+```
+
+**German to English translation**
+```
+User: "Was bedeutet 'Entschuldigung'?"
+Assistant: [calls save_phrase(german="Entschuldigung")]
+Assistant: "Entschuldigung means 'excuse me' or 'sorry'.\n\nIt's used to apologize or get someone's attention..."
+[Response entirely in English with explanations]
+```
+
+**Casual conversation (German first, then English)**
+```
+User: "Hello"
+Assistant: "Hallo! Wie kann ich dir helfen?\n_Hello! How can I help you?_"
+```
+
+
+## Tone and Formatting
 - Be friendly, encouraging, and educational
-- Explain grammar points clearly when relevant
+- Explain grammar points clearly when relevant - use definitive statements, not questions or self-corrections
 - Provide cultural context for phrases when appropriate
-- Make learning feel natural and conversational"""
+- Make learning feel natural and conversational
+- **Always use clear formatting:** bold for headings, line breaks for sections, numbered lists for examples
+- **Avoid rambling:** If unsure about grammar, provide the simple, practical explanation rather than multiple uncertain versions
+"""
 
 
 class GermanLearningAgent:
-    def __init__(self, api_key: str, model: str, db: PhrasesDB):
+    def __init__(self, api_key: str, model: str, db: PhrasesDB, enable_logs: bool = True):
         self.client = OpenAI(api_key=api_key)
         self.model = model
         self.db = db
-        self.tools: list[ChatCompletionToolParam] = [
+        self.enable_logs = enable_logs
+        self.messages: list[dict[str, str]] = []
+        self.tools: list[dict[str, Any]] = [
             {
                 "type": "function",
-                "function": {
-                    "name": "save_phrase",
-                    "description": "Save a new German-English phrase pair to the learning database. Use this when translating interesting or useful words/phrases that would be valuable for the user to remember.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "german": {"type": "string", "description": "The German word or phrase"},
-                            "english": {"type": "string", "description": "The English translation"},
-                            "context": {
-                                "type": "string",
-                                "description": "Additional context, example usage, or grammar notes",
-                            },
-                        },
-                        "required": ["german", "english", "context"],
+                "name": "save_phrase",
+                "description": "Save a new German phrase to the learning database. Use this when the user wants to remember a German word or phrase.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "german": {"type": "string", "description": "The German word or phrase"},
+                    },
+                    "required": ["german"],
+                },
+            },
+            {
+                "type": "function",
+                "name": "get_next_due_phrases",
+                "description": "Get the next batch of German phrases that need review. Returns a list of up to 10 phrases with their IDs and German text. Returns empty list if no phrases are due. Use this to get phrases for the review session.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of phrases to return (default: 10)",
+                            "default": 10,
+                        }
                     },
                 },
             },
             {
                 "type": "function",
-                "function": {
-                    "name": "get_all_phrases",
-                    "description": "Get all saved phrases with their statistics (review count, ease factor, next review date)",
-                    "parameters": {"type": "object", "properties": {}},
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_due_phrases",
-                    "description": "Get phrases that are currently due for spaced repetition review",
-                    "parameters": {"type": "object", "properties": {}},
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "update_review",
-                    "description": "Update a phrase's spaced repetition statistics after user reviews it. Quality: 1=Again (complete forget), 2=Hard (difficult to recall), 3=Good (recalled with effort), 4=Easy (recalled easily)",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "phrase_id": {"type": "string", "description": "The ID of the phrase being reviewed"},
-                            "quality": {
-                                "type": "integer",
-                                "description": "Quality of recall: 1=Again, 2=Hard, 3=Good, 4=Easy",
-                                "minimum": 1,
-                                "maximum": 4,
-                            },
+                "name": "show_review",
+                "description": "Display a review card to the user with the German phrase, reveal button, and rating buttons. This is a terminal tool - call it ONLY ONCE and wait for user input. After the user rates the phrase, they will send a message like 'Reviewed: [phrase] - [rating]'. The explanation should be in English with translation, context, usage examples, and grammar notes.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "phrase_id": {"type": "string", "description": "The ID of the phrase being reviewed"},
+                        "german": {"type": "string", "description": "The German phrase to show"},
+                        "explanation": {
+                            "type": "string",
+                            "description": "Full English explanation with translation, context, examples, and grammar notes",
                         },
-                        "required": ["phrase_id", "quality"],
                     },
+                    "required": ["phrase_id", "german", "explanation"],
                 },
             },
             {
                 "type": "function",
-                "function": {
-                    "name": "should_clear_history",
-                    "description": "Determine if the current message represents a new conversation that should reset the message history. Returns true if history should be cleared.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "is_new_conversation": {
-                                "type": "boolean",
-                                "description": "True if this is a new conversation unrelated to previous messages",
-                            }
-                        },
-                        "required": ["is_new_conversation"],
-                    },
-                },
+                "name": "clear_history",
+                "description": "Clear the conversation history for this user. Use this when the user explicitly asks to clear/reset the conversation, or when you detect a completely new conversation topic that doesn't relate to previous context.",
+                "parameters": {"type": "object", "properties": {}},
             },
         ]
 
     def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> str:
         if tool_name == "save_phrase":
-            phrase_id = self.db.add_phrase(
-                german=arguments["german"], english=arguments["english"], context=arguments["context"]
-            )
+            phrase_id = self.db.add_phrase(german=arguments["german"])
             return f"Phrase saved successfully with ID: {phrase_id}"
 
-        elif tool_name == "get_all_phrases":
-            phrases = self.db.get_all_phrases()
-            return f"Found {len(phrases)} phrases: {phrases}"
+        elif tool_name == "get_next_due_phrases":
+            limit = arguments.get("limit", 10)
+            phrases = self.db.get_due_phrases(limit=limit)
+            if phrases:
+                phrases_list = "\n".join([f"- ID={p['id']}, German={p['german']}" for p in phrases])
+                return f"Found {len(phrases)} phrase(s) due for review:\n{phrases_list}"
+            return "No phrases due for review"
 
-        elif tool_name == "get_due_phrases":
-            phrases = self.db.get_due_phrases()
-            return f"Found {len(phrases)} phrases due for review: {phrases}"
+        elif tool_name == "show_review":
+            return f"SHOW_REVIEW:{arguments['phrase_id']}:{arguments['german']}:{arguments['explanation']}"
 
-        elif tool_name == "update_review":
-            self.db.update_review(phrase_id=arguments["phrase_id"], quality=arguments["quality"])
-            return f"Review updated for phrase {arguments['phrase_id']} with quality {arguments['quality']}"
-
-        elif tool_name == "should_clear_history":
-            return f"History clear decision: {arguments['is_new_conversation']}"
+        elif tool_name == "clear_history":
+            self.messages = []
+            return "CLEAR_HISTORY"
 
         return "Unknown tool"
 
-    def process_message(self, messages: list[dict[str, str]]) -> tuple[str, bool]:
-        messages_with_system: list[ChatCompletionMessageParam] = [
-            cast(ChatCompletionMessageParam, {"role": "system", "content": SYSTEM_PROMPT})
-        ]
-        messages_with_system.extend(cast(list[ChatCompletionMessageParam], messages))
+    def _is_terminal_tool(self, tool_name: str) -> bool:
+        """Terminal tools don't trigger another LLM call - they wait for user input."""
+        return tool_name in ["save_phrase", "show_review", "clear_history"]
 
-        response = self.client.chat.completions.create(
-            model=self.model, messages=messages_with_system, tools=self.tools, temperature=0.7
+    def add_user_message(self, content: str) -> None:
+        """Add a user message to the conversation history."""
+        self.messages.append({"role": "user", "content": content})
+
+    def add_assistant_message(self, content: str) -> None:
+        """Add an assistant message to the conversation history."""
+        self.messages.append({"role": "assistant", "content": content})
+
+    def clear_history(self) -> None:
+        """Clear the conversation history."""
+        self.messages = []
+
+    def process_message(self, user_message: str) -> list[MessageOutput | ShowReviewOutput | LogOutput]:
+        """Process a user message and return a list of structured outputs."""
+        self.add_user_message(user_message)
+
+        input_list = []
+        for msg in self.messages:
+            input_list.append({"role": msg["role"], "content": msg["content"]})
+
+        if self.enable_logs:
+            outputs: list[MessageOutput | ShowReviewOutput | LogOutput] = [LogOutput(message="Processing message...")]
+        else:
+            outputs = []
+
+        response = self.client.responses.create(  # type: ignore
+            model=self.model,
+            instructions=SYSTEM_PROMPT,
+            input=input_list,
+            tools=self.tools,
+            reasoning={"effort": "minimal"},
+            text={"verbosity": "low"},
         )
 
-        should_clear = False
-        while response.choices[0].finish_reason == "tool_calls":
-            assistant_message = response.choices[0].message
-            tool_calls = assistant_message.tool_calls
-            if not tool_calls:
+        max_iterations = 10
+        iterations = 0
+        was_cleared = False
+        review_shown_in_turn = False
+
+        while response.status == "completed" and iterations < max_iterations:
+            iterations += 1
+            has_continuation_tools = False
+
+            input_list += response.output
+
+            for output_item in response.output:
+                if output_item.type == "function_call":
+                    tool_name = output_item.name
+                    tool_args = json.loads(output_item.arguments)
+
+                    if self.enable_logs:
+                        args_str = ", ".join([f"{k}={v}" for k, v in tool_args.items()])
+                        outputs.append(LogOutput(message=f"Tool call: {tool_name}({args_str})"))
+
+                    result = self._execute_tool(tool_name, tool_args)
+
+                    if result == "CLEAR_HISTORY":
+                        was_cleared = True
+                        if self.enable_logs:
+                            outputs.append(LogOutput(message="History cleared"))
+                    elif result.startswith("SHOW_REVIEW:"):
+                        parts = result.split(":", 3)
+                        if len(parts) == 4:
+                            if not review_shown_in_turn:
+                                outputs.append(
+                                    ShowReviewOutput(
+                                        phrase_id=parts[1],
+                                        german=parts[2],
+                                        explanation=parts[3],
+                                    )
+                                )
+                                review_shown_in_turn = True
+                                result = "Review shown to user. Waiting for user rating."
+                                if self.enable_logs:
+                                    outputs.append(LogOutput(message=f"Showing review for phrase ID: {parts[1]}"))
+                            else:
+                                result = "Review NOT shown - only one review can be displayed per turn. This review was skipped."
+                                if self.enable_logs:
+                                    outputs.append(
+                                        LogOutput(message="Additional review call skipped (only 1 per turn)")
+                                    )
+
+                    input_list.append(
+                        {"type": "function_call_output", "call_id": output_item.call_id, "output": result}
+                    )
+
+                    # Only continue calling LLM for non-terminal tools
+                    if not self._is_terminal_tool(tool_name):
+                        has_continuation_tools = True
+
+            if not has_continuation_tools:
                 break
 
-            messages_with_system.append(
-                cast(
-                    ChatCompletionMessageParam,
-                    {
-                        "role": "assistant",
-                        "content": assistant_message.content or "",
-                        "tool_calls": [
-                            {
-                                "id": tc.id,
-                                "type": tc.type,
-                                "function": {
-                                    "name": tc.function.name if hasattr(tc, "function") else "",
-                                    "arguments": tc.function.arguments if hasattr(tc, "function") else "",
-                                },
-                            }
-                            for tc in tool_calls
-                        ],
-                    },
-                )
+            response = self.client.responses.create(  # type: ignore
+                model=self.model,
+                instructions=SYSTEM_PROMPT,
+                input=input_list,
+                tools=self.tools,
+                reasoning={"effort": "minimal"},
+                text={"verbosity": "low"},
             )
 
-            for tool_call in tool_calls:
-                import json
+        response_text = ""
+        for output_item in response.output:
+            if output_item.type == "message":
+                for content_item in output_item.content:
+                    if content_item.type == "output_text":
+                        response_text += content_item.text
 
-                if not hasattr(tool_call, "function"):
-                    continue
+        # Don't add assistant message to history if history was cleared
+        if not was_cleared and response_text:
+            self.add_assistant_message(response_text)
 
-                tool_name = tool_call.function.name
-                tool_args = json.loads(tool_call.function.arguments)
+        # Add message output if there's any text
+        if response_text:
+            outputs.append(MessageOutput(message=response_text))
 
-                if tool_name == "should_clear_history":
-                    should_clear = tool_args.get("is_new_conversation", False)
-
-                result = self._execute_tool(tool_name, tool_args)
-                messages_with_system.append(
-                    cast(ChatCompletionMessageParam, {"role": "tool", "tool_call_id": tool_call.id, "content": result})
-                )
-
-            response = self.client.chat.completions.create(
-                model=self.model, messages=messages_with_system, tools=self.tools, temperature=0.7
-            )
-
-        return response.choices[0].message.content or "", should_clear
+        return outputs

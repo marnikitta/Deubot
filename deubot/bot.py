@@ -1,7 +1,27 @@
+import logging
 from datetime import datetime, timedelta
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from deubot.agent import GermanLearningAgent
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from telegram.error import BadRequest
+from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput
+
+logger = logging.getLogger(__name__)
+
+
+class AuthFilter(filters.MessageFilter):
+    def __init__(self, allowed_user_id: int):
+        super().__init__()
+        self.allowed_user_id = allowed_user_id
+
+    def filter(self, message: Message) -> bool:
+        if message.from_user is None:
+            return False
+
+        if message.from_user.id == self.allowed_user_id:
+            return True
+        else:
+            logger.warning(f"Unauthorized access attempt from user {message.from_user.id}")
+            return False
 
 
 class DeuBot:
@@ -9,108 +29,190 @@ class DeuBot:
         self.token = token
         self.allowed_user_id = allowed_user_id
         self.agent = agent
-        self.user_messages: dict[int, list[dict[str, str]]] = {}
-        self.last_reset: dict[int, datetime] = {}
+        self.last_reset: datetime | None = None
+        self.review_state: dict = {}
 
-    def _is_authorized(self, user_id: int) -> bool:
-        return user_id == self.allowed_user_id
-
-    def _should_reset_daily(self, user_id: int) -> bool:
-        if user_id not in self.last_reset:
+    def _should_reset_daily(self) -> bool:
+        if self.last_reset is None:
             return True
         now = datetime.now()
-        last = self.last_reset[user_id]
-        return now - last > timedelta(days=1)
+        return now - self.last_reset > timedelta(days=1)
 
-    def _clear_history(self, user_id: int) -> None:
-        self.user_messages[user_id] = []
-        self.last_reset[user_id] = datetime.now()
+    def _clear_history(self) -> None:
+        self.agent.clear_history()
+        self.last_reset = datetime.now()
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.effective_user or not update.message:
-            return
-        if not self._is_authorized(update.effective_user.id):
-            await update.message.reply_text("Sorry, you are not authorized to use this bot.")
+        if not update.message:
             return
 
-        self._clear_history(update.effective_user.id)
+        self._clear_history()
         await update.message.reply_text(
-            "Hallo! I'm your German learning assistant.\n\n"
-            "Send me any German or English text and I'll translate it for you.\n"
-            "I'll also save useful phrases for spaced repetition practice.\n\n"
-            "Commands:\n"
-            "/clear - Clear conversation history\n"
-            "/stats - Show your learning statistics"
+            "Hallo! Ich bin dein Deutschlernassistent\\.\n"
+            "_Hello\\! I'm your German learning assistant\\._\n\n"
+            "Schicke mir deutschen oder englischen Text und ich übersetze ihn für dich\\.\n"
+            "_Send me German or English text and I'll translate it for you\\._\n\n"
+            "Befehle / _Commands:_\n"
+            "/clear \\- Verlauf löschen / _Clear history_\n"
+            "/stats \\- Statistiken / _Show statistics_\n"
+            "/review \\- Wiederholung starten / _Start review session_",
+            parse_mode="MarkdownV2",
         )
 
     async def clear_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.effective_user or not update.message:
-            return
-        if not self._is_authorized(update.effective_user.id):
+        if not update.message:
             return
 
-        self._clear_history(update.effective_user.id)
-        await update.message.reply_text("Conversation history cleared!")
+        self._clear_history()
+        await update.message.reply_text(
+            "Verlauf gelöscht\\!\n_Conversation history cleared\\!_", parse_mode="MarkdownV2"
+        )
 
     async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.effective_user or not update.message:
-            return
-        if not self._is_authorized(update.effective_user.id):
+        if not update.message:
             return
 
         phrases = self.agent.db.get_all_phrases()
         due_phrases = self.agent.db.get_due_phrases()
 
-        stats_text = "Learning Statistics\n\n"
-        stats_text += f"Total phrases: {len(phrases)}\n"
-        stats_text += f"Due for review: {len(due_phrases)}\n"
+        stats_text = "Lernstatistiken\n_Learning Statistics_\n\n"
+        stats_text += f"Gesamt: {len(phrases)} Phrasen\n_Total: {len(phrases)} phrases_\n"
+        stats_text += f"Fällig: {len(due_phrases)} Phrasen\n_Due for review: {len(due_phrases)} phrases_"
 
-        if phrases:
-            total_reviews = sum(p["review_count"] for p in phrases)
-            stats_text += f"Total reviews: {total_reviews}\n"
+        await update.message.reply_text(stats_text, parse_mode="Markdown")
 
-        await update.message.reply_text(stats_text)
-
-    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.effective_user or not update.message or not update.message.text:
+    async def review_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not update.message:
             return
-        if not self._is_authorized(update.effective_user.id):
-            await update.message.reply_text("Sorry, you are not authorized to use this bot.")
-            return
-
-        user_id = update.effective_user.id
-        user_text = update.message.text
-
-        if self._should_reset_daily(user_id):
-            self._clear_history(user_id)
-
-        if user_id not in self.user_messages:
-            self.user_messages[user_id] = []
-
-        self.user_messages[user_id].append({"role": "user", "content": user_text})
 
         try:
-            response_text, should_clear = self.agent.process_message(self.user_messages[user_id])
-
-            if should_clear:
-                self._clear_history(user_id)
-                self.user_messages[user_id].append({"role": "user", "content": user_text})
-                response_text, _ = self.agent.process_message(self.user_messages[user_id])
-
-            self.user_messages[user_id].append({"role": "assistant", "content": response_text})
-
-            await update.message.reply_text(response_text)
-
+            outputs = self.agent.process_message("I want to start a review session")
+            await self._handle_outputs(update.message, outputs)
         except Exception as e:
-            await update.message.reply_text(f"Sorry, an error occurred: {str(e)}")
+            await update.message.reply_text(f"Fehler / Error: {str(e)}")
+            raise
+
+    async def _handle_outputs(self, message, outputs: list[MessageOutput | ShowReviewOutput | LogOutput]) -> None:
+        for output in outputs:
+            if isinstance(output, MessageOutput):
+                if output.message:
+                    await message.reply_text(output.message, parse_mode="Markdown")
+            elif isinstance(output, ShowReviewOutput):
+                await self._show_review_card(message, output)
+            elif isinstance(output, LogOutput):
+                if output.message:
+                    await message.reply_text(f"`{output.message}`", parse_mode="Markdown")
+
+    async def _show_review_card(self, message, review: ShowReviewOutput) -> None:
+        self.review_state = {"phrase_id": review.phrase_id, "german": review.german, "explanation": review.explanation}
+
+        keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{review.phrase_id}")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        text = f"*{review.german}*\n\n_What does this mean?_"
+        await message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+    async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        query = update.callback_query
+        if not query or not query.data or not query.from_user:
+            return
+
+        if query.from_user.id != self.allowed_user_id:
+            logger.warning(f"Unauthorized callback from user {query.from_user.id}")
+            await query.answer("Not authorized")
+            return
+
+        await query.answer()
+        data = query.data
+
+        if data.startswith("reveal_"):
+            phrase_id = data.split("_")[1]
+            await self._handle_reveal(query, phrase_id)
+        elif data.startswith("quality_"):
+            parts = data.split("_")
+            phrase_id = parts[1]
+            quality = int(parts[2])
+            await self._handle_quality(query, phrase_id, quality)
+
+    async def _handle_reveal(self, query, phrase_id: str) -> None:
+        if not self.review_state or self.review_state["phrase_id"] != phrase_id:
+            return
+
+        german = self.review_state["german"]
+        explanation = self.review_state["explanation"]
+
+        keyboard = [
+            [
+                InlineKeyboardButton("Nochmal / Again (1)", callback_data=f"quality_{phrase_id}_1"),
+                InlineKeyboardButton("Schwer / Hard (2)", callback_data=f"quality_{phrase_id}_2"),
+            ],
+            [
+                InlineKeyboardButton("Gut / Good (3)", callback_data=f"quality_{phrase_id}_3"),
+                InlineKeyboardButton("Leicht / Easy (4)", callback_data=f"quality_{phrase_id}_4"),
+            ],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        text = f"*{german}*\n\n{explanation}\n\n_How well did you remember?_"
+        try:
+            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        except BadRequest as e:
+            if "message is not modified" not in str(e).lower():
+                raise
+            logger.debug(f"Message not modified (duplicate reveal click): {e}")
+
+    async def _handle_quality(self, query, phrase_id: str, quality: int) -> None:
+        if not self.review_state or self.review_state["phrase_id"] != phrase_id:
+            return
+
+        german = self.review_state["german"]
+        quality_names = {1: "Again", 2: "Hard", 3: "Good", 4: "Easy"}
+        quality_name = quality_names.get(quality, "")
+
+        self.agent.db.update_review(phrase_id, quality)
+        self.review_state = {}
+
+        try:
+            await query.edit_message_text(
+                f"{query.message.text}\n\n✓ Rated as: {quality_name}",
+                parse_mode="Markdown",
+            )
+        except BadRequest as e:
+            if "message is not modified" not in str(e).lower():
+                raise
+            logger.debug(f"Message not modified (duplicate quality rating): {e}")
+
+        try:
+            outputs = self.agent.process_message(f"REVIEWED: {german} as {quality_name}")
+            await self._handle_outputs(query.message, outputs)
+        except Exception as e:
+            await query.message.reply_text(f"Error: {str(e)}")
+
+    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not update.message or not update.message.text:
+            return
+
+        user_text = update.message.text
+
+        if self._should_reset_daily():
+            self._clear_history()
+
+        try:
+            outputs = self.agent.process_message(user_text)
+            await self._handle_outputs(update.message, outputs)
+        except Exception as e:
+            await update.message.reply_text(f"Fehler / Error: {str(e)}")
             raise
 
     def run(self) -> None:
         application = Application.builder().token(self.token).build()
+        auth_filter = AuthFilter(self.allowed_user_id)
 
-        application.add_handler(CommandHandler("start", self.start_command))
-        application.add_handler(CommandHandler("clear", self.clear_command))
-        application.add_handler(CommandHandler("stats", self.stats_command))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
+        application.add_handler(CommandHandler("start", self.start_command, filters=auth_filter))
+        application.add_handler(CommandHandler("clear", self.clear_command, filters=auth_filter))
+        application.add_handler(CommandHandler("stats", self.stats_command, filters=auth_filter))
+        application.add_handler(CommandHandler("review", self.review_command, filters=auth_filter))
+        application.add_handler(CallbackQueryHandler(self.handle_callback))
+        application.add_handler(MessageHandler(auth_filter & filters.TEXT & ~filters.COMMAND, self.handle_message))
 
         application.run_polling(allowed_updates=Update.ALL_TYPES)
