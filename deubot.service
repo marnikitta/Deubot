@@ -1,0 +1,28 @@
+# Awesome tutorial on using systemd for service deployment
+# https://github.com/torfsen/python-systemd-tutorial
+
+# Prerequisite:
+# 1. Make a symlink to `~/.config/systemd/user/`
+# 2. Make sure it is visible with `systemctl --user list-unit-files | grep deubot`
+# 3. Reload config with `systemctl --user daemon-reload`
+# 4. Enable with `systemctl --user enable deubot.service`
+# 5. Untie user systemd instance from my login with `sudo loginctl enable-linger deubot`
+
+# Usage:
+# Start service with `systemctl --user start deubot.service`
+# Stop service with `systemctl --user stop deubot.service`
+# Restart service with `systemctl --user restart deubot.service`
+
+[Unit]
+Description=Deuch learning bot
+
+[Service]
+ExecStart=/home/alpinist/deubot/.venv/bin/python -m deubot.main
+WorkingDirectory=/home/alpinist/deubot
+Restart=always
+Environment=PYTHONUNBUFFERED=1
+# notify type means that systemd will wait till notification from application that is successfully started
+Type=notify
+
+[Install]
+WantedBy=default.target
