@@ -12,3 +12,6 @@ wheels/
 # Environment and data files
 .env
 data/
+
+# IDE
+.idea
