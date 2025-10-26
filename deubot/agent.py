@@ -184,25 +184,14 @@ class GermanLearningAgent:
 
         return ToolCallResult(result="Unknown tool", terminal=True, user_outputs=[])
 
-    def add_user_message(self, content: str) -> None:
-        """Add a user message to the conversation history."""
-        self.messages.append({"role": "user", "content": content})
-
-    def add_assistant_message(self, content: str) -> None:
-        """Add an assistant message to the conversation history."""
-        self.messages.append({"role": "assistant", "content": content})
-
     def clear_history(self) -> None:
         """Clear the conversation history."""
         self.messages = []
 
     def process_message(self, user_message: str) -> Generator[UserOutput, None, None]:
         """Process a user message and yield structured outputs as they appear."""
-        self.add_user_message(user_message)
-
-        input_list = []
-        for msg in self.messages:
-            input_list.append({"role": msg["role"], "content": msg["content"]})
+        input_list = list(self.messages)
+        input_list.append({"role": "user", "content": user_message})
 
         yield TypingOutput()
 
@@ -300,9 +289,8 @@ class GermanLearningAgent:
                     if content_item.type == "output_text":
                         response_text += content_item.text
 
-        # Add assistant message to history
-        if response_text:
-            self.add_assistant_message(response_text)
+        # Save the entire conversation including tool calls and outputs to history
+        self.messages = input_list
 
         # Yield message output if there's any text
         if response_text:

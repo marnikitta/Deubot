@@ -69,8 +69,8 @@ def test_get_phrases_when_database_populated(agent: GermanLearningAgent):
 def test_conversation_continuation(agent: GermanLearningAgent):
     """Test that agent maintains conversation context."""
     # Simulate conversation history
-    agent.add_user_message("Translate: Good morning")
-    agent.add_assistant_message("Guten Morgen\n_Good morning_")
+    agent.messages.append({"role": "user", "content": "Translate: Good morning"})
+    agent.messages.append({"role": "assistant", "content": "Guten Morgen\n_Good morning_"})
 
     # Now send the follow-up message
     outputs = list(agent.process_message("And how do I say good evening?"))

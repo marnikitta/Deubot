@@ -7,9 +7,9 @@ test:
 	uv run pytest tests/ -v --tb=short
 
 lint:
-	uv run mypy --check-untyped-defs deubot
-	uv run black --line-length 120 deubot
-	uv run flake8 --ignore E501,W503,E203 deubot
+	uv run mypy --check-untyped-defs deubot tests
+	uv run black --line-length 120 deubot tests
+	uv run flake8 --ignore E501,W503,E203 deubot tests
 
 push: lint
 	rsync --delete --verbose --archive --compress --rsh=ssh deubot.service deubot pyproject.toml $(host):~/deubot

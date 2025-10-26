@@ -39,7 +39,9 @@ def test_phrase_saving_outputs_confirmation(agent: GermanLearningAgent):
     confirmation_messages = [m.message for m in message_outputs if "✓ Saved:" in m.message]
 
     assert len(confirmation_messages) > 0, "No confirmation message found"
-    assert "Regenschirm" in confirmation_messages[0], f"Expected confirmation for 'Regenschirm', got: {confirmation_messages[0]}"
+    assert (
+        "Regenschirm" in confirmation_messages[0]
+    ), f"Expected confirmation for 'Regenschirm', got: {confirmation_messages[0]}"
 
 
 def test_phrase_saving_continues_with_translation(agent: GermanLearningAgent):
@@ -53,7 +55,9 @@ def test_phrase_saving_continues_with_translation(agent: GermanLearningAgent):
     # Assert - check we got both confirmation and translation
     message_outputs = [o for o in outputs if isinstance(o, MessageOutput)]
 
-    assert len(message_outputs) >= 2, f"Expected at least 2 messages (confirmation + translation), got {len(message_outputs)}"
+    assert (
+        len(message_outputs) >= 2
+    ), f"Expected at least 2 messages (confirmation + translation), got {len(message_outputs)}"
 
     # First should be confirmation
     assert "✓ Saved:" in message_outputs[0].message, "First message should be confirmation"
@@ -106,6 +110,6 @@ def test_various_translation_formats(
     # Check the saved phrase contains expected German word
     all_phrases = test_db.get_all_phrases()
     saved_phrases = [p["german"] for p in all_phrases]
-    assert any(expected_german in phrase for phrase in saved_phrases), (
-        f"Expected '{expected_german}' in saved phrases, got: {saved_phrases}"
-    )
+    assert any(
+        expected_german in phrase for phrase in saved_phrases
+    ), f"Expected '{expected_german}' in saved phrases, got: {saved_phrases}"

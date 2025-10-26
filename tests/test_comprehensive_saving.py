@@ -12,17 +12,13 @@ TRANSLATION_TEST_CASES = [
     # English to German formats
     ("How to say umbrella?", True, "how to say format"),
     ("What's the German word for car?", True, "what's the German word format"),
-
     # German to English formats
     ("Was bedeutet Regenschirm?", True, "was bedeutet format"),
     ("What does Krankenhaus mean?", True, "what does X mean format"),
-
     # Direct German phrase
     ("Guten Abend", True, "direct German phrase"),
-
     # Translation request
     ("Translate 'the book' to German", True, "translate format"),
-
     # Grammar questions - should NOT save
     ("What is the dative case?", False, "grammar question"),
     ("What's the difference between der, die, das?", False, "grammar comparison"),
@@ -44,11 +40,11 @@ def test_translation_request_saving(
     # Act
     outputs = list(agent.process_message(test_message))
 
-    # Get response types from log outputs
-    response_types = []
+    # Check if outputs were generated
+    _response_types: list[str] = []
     for output in outputs:
         if isinstance(output, LogOutput) and "Response types:" in output.message:
-            response_types_str = output.message.split("Response types: ")[1]
+            _response_types_str = output.message.split("Response types: ")[1]
             break
 
     # Assert

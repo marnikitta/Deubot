@@ -83,7 +83,10 @@ class PhrasesDB:
         next_review_date += timedelta(days=phrase.interval_days)
         phrase.next_review = next_review_date.isoformat()
 
-        logger.info("Review updated", extra={"phrase_id": phrase_id, "quality": quality, "next_interval_days": phrase.interval_days})
+        logger.info(
+            "Review updated",
+            extra={"phrase_id": phrase_id, "quality": quality, "next_interval_days": phrase.interval_days},
+        )
         self._save()
 
     def get_all_phrases(self) -> list[dict[str, Any]]:
