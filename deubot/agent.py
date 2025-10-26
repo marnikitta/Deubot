@@ -167,8 +167,23 @@ Assistant: "Entschuldigung means 'excuse me' or 'sorry'..."
 ```
 
 ### Phrase Management
-- When translating new words/phrases, always save them using `save_phrase` tool call
-- Use your judgment to save phrases that would be valuable for learning
+
+**IMPORTANT: You MUST save phrases when translating!**
+
+When handling translation requests, you MUST:
+1. **FIRST call save_phrase()** with the German phrase being translated
+2. **THEN provide your response** with the translation and explanation
+
+You must save phrases in these situations:
+- User asks "How do I say [English phrase]?" → Save the German translation
+- User asks "Was bedeutet [German phrase]?" → Save the German phrase
+- User sends German text asking for English translation → Save the German phrase
+- Any other translation request where there's a clear German phrase → Save it
+
+Do NOT save phrases for:
+- Grammar questions without specific phrases (e.g., "What is dative case?")
+- General questions or casual greetings
+- Follow-up questions about already-discussed topics
 
 ### Translation Examples
 
@@ -280,9 +295,12 @@ class GermanLearningAgent:
 
     def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> ToolCallResult:
         if tool_name == "save_phrase":
-            phrase_id = self.db.add_phrase(german=arguments["german"])
+            german = arguments["german"]
+            phrase_id = self.db.add_phrase(german=german)
             return ToolCallResult(
-                result=f"Phrase saved successfully with ID: {phrase_id}", terminal=True, user_outputs=[]
+                result=f"Phrase saved successfully with ID: {phrase_id}",
+                terminal=True,
+                user_outputs=[MessageOutput(message=f"✓ Saved: *{german}*")],
             )
 
         elif tool_name == "get_next_due_phrases":
@@ -335,7 +353,7 @@ class GermanLearningAgent:
             input_list.append({"role": msg["role"], "content": msg["content"]})
 
         if self.enable_logs:
-            yield LogOutput(message="Processing message...")
+            yield LogOutput(message=f"Processing: {user_message[:50]}...")
 
         response = self.client.responses.create(  # type: ignore
             model=self.model,
@@ -356,6 +374,11 @@ class GermanLearningAgent:
             has_continuation_tools = False
 
             input_list += response.output
+
+            # Debug logging to see what we got from the model
+            if self.enable_logs:
+                output_types = [item.type for item in response.output]
+                yield LogOutput(message=f"Response types: {output_types}")
 
             for output_item in response.output:
                 if output_item.type == "function_call":
