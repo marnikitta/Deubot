@@ -1,112 +1,43 @@
-# DeuBot - German Learning Telegram Bot
+# DeuBot
 
-A Telegram bot for learning German through translation and spaced repetition, powered by OpenAI's GPT.
+**Primary goal**: Explore capabilities and limitations of coding with AI coding assistants (Claude Code, Cursor, etc.) rather than build production-ready software.
 
-## Features
+*This README was written by an AI coding assistant.*
 
-- **Bidirectional Translation**: Translates between English and German with context and usage examples
-- **Intelligent Conversation Management**: Automatically detects new conversations and manages message history
-- **Spaced Repetition System**: Save and review German phrases using an SM-2 based algorithm
-- **Single-User Security**: Restricted access via user ID configuration
-- **Persistent Storage**: JSON-based phrase database with review statistics
+## What It Is
 
-## Setup
+A German learning Telegram bot with spaced repetition. Built iteratively with Claude Code to test agent-driven development workflows. The bot itself is an AI agent (OpenAI) that uses tool calling for translation, phrase storage, and spaced repetition reviews—showing buttons in Telegram UI through tools, not hardcoded commands.
 
-### 1. Install Dependencies
+## Design
 
-```bash
-uv sync
-```
+**Agent architecture**: OpenAI integration with structured tool calling. Tools have elaborate descriptions following Claude Code's documentation philosophy (see [Decoding Claude Code](https://minusx.ai/blog/decoding-claude-code/)). Agent returns typed outputs using dataclasses, not magic strings.
 
-### 2. Configure Environment
+**Spaced repetition**: SM-2 algorithm with JSON persistence. Quality ratings (1-5) adjust ease factors and intervals for optimal review scheduling.
 
-Copy the example environment file and fill in your credentials:
+**Deployment**: Systemd service with Type=notify protocol for proper startup signaling. Deployed via rsync to remote host.
 
-```bash
-cp .env.example .env
-```
+**Stack**: Python 3.13, `uv` for dependencies, Telegram Bot API, OpenAI GPT.
 
-Edit `.env` with your configuration:
+## Testing & Development
 
-```env
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-ALLOWED_USER_ID=your_telegram_user_id_here
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-5-nano
-PHRASES_DB_PATH=./data/phrases.json
-```
-
-#### Getting Your Configuration Values
-
-- **TELEGRAM_BOT_TOKEN**: Create a bot via [@BotFather](https://t.me/botfather) on Telegram
-- **ALLOWED_USER_ID**: Send a message to [@userinfobot](https://t.me/userinfobot) to get your user ID
-- **OPENAI_API_KEY**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-
-### 3. Run the Bot
+Integrated into development cycle:
+- **Linting**: mypy, black (120 chars), flake8
+- **LLM tests**: Validate tool usage patterns and agent behavior probabilistically (semantic correctness, not exact matches)
+- **Logic tests**: SM-2 algorithm correctness
+- **End-to-end tests**: Resilient to LLM non-determinism
 
 ```bash
-make run
-# or
-uv run python -m deubot.main
+make lint   # Run all linters
+make run    # Run locally
+make deploy # Deploy to remote systemd service
 ```
 
-## Usage
+## Structure
 
-### Translation Mode
+`deubot/agent.py` - AI agent with tool calling
+`deubot/tools.py` - Tool definitions with detailed documentation
+`deubot/bot.py` - Telegram handler
+`deubot/database.py` - SM-2 spaced repetition storage
+`deubot/systemd.py` - Type=notify service integration
 
-Just send any German or English text to the bot:
-
-```
-You: Guten Tag
-Bot: "Guten Tag" means "Good day" in English. It's a formal greeting used throughout the day...
-```
-
-The bot will:
-- Detect the language
-- Provide translation
-- Add contextual information and usage examples
-- Automatically save useful phrases for spaced repetition
-
-### Commands
-
-- `/start` - Initialize the bot and get welcome message
-- `/clear` - Clear conversation history
-- `/debug` - Toggle debug logging
-
-### Spaced Repetition
-
-The bot understands natural language requests for reviewing phrases. Just ask naturally:
-
-```
-You: Let's practice my saved phrases
-Bot: [Starts review session, showing German phrases for you to recall]
-
-You: Show me my statistics
-Bot: [Shows learning statistics]
-```
-
-The bot will present phrases and you can respond with how well you remembered them. The system uses a modified SM-2 algorithm to schedule reviews optimally.
-
-## Development
-
-### Project Structure
-
-Core modules in `deubot/`: agent (AI with tool calling), bot (Telegram handler), database (phrase storage), dotenv (env loader), main (entry point), systemd (service integration).
-
-### Linting
-
-```bash
-make lint
-```
-
-### Deployment
-
-```bash
-make deploy
-```
-
-This will:
-1. Run linters
-2. Sync code to remote host
-3. Restart the systemd service
-4. Show recent logs
+Configuration via `.env` file (see `.env.example`).
