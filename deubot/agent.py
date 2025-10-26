@@ -70,15 +70,6 @@ The bot is targeted towards people who don't know German. So all explanations, s
   2. **Translation request (English → German)** → Respond with German followed by English in italics
   3. **German text/question** → Respond entirely in English with clear explanations
 
-### Conversation Management
-- Analyze each message to determine if it's a new conversation or continuation
-- Consider it a new conversation if:
-  - The topic has significantly changed
-  - The user is starting a completely different query
-  - There's no clear connection to previous messages
-
-If it is a new conversation, call `clear_history` tool alongside the response.
-
 ### Spaced Repetition Review Mode
 
 When user requests a review session (says "review", "/review", "let's practice", etc.):
@@ -324,13 +315,6 @@ class GermanLearningAgent:
                     "additionalProperties": False,
                 },
             },
-            {
-                "type": "function",
-                "name": "clear_history",
-                "description": "Clear the conversation history for this user",
-                "strict": True,
-                "parameters": {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
-            },
         ]
 
     def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> ToolCallResult:
@@ -365,10 +349,6 @@ class GermanLearningAgent:
                     )
                 ],
             )
-
-        elif tool_name == "clear_history":
-            self.messages = []
-            return ToolCallResult(result="True", terminal=True, user_outputs=[])
 
         return ToolCallResult(result="Unknown tool", terminal=True, user_outputs=[])
 
@@ -407,7 +387,6 @@ class GermanLearningAgent:
         max_iterations = 10
         iterations = 0
         review_shown_in_turn = False
-        was_cleared = False
 
         while response.status == "completed" and iterations < max_iterations:
             iterations += 1
@@ -430,12 +409,6 @@ class GermanLearningAgent:
                         yield LogOutput(message=f"Tool call: {tool_name}({args_str})")
 
                     tool_call_result = self._execute_tool(tool_name, tool_args)
-
-                    # Track if history was cleared
-                    if tool_name == "clear_history":
-                        was_cleared = True
-                        if self.enable_logs:
-                            yield LogOutput(message="History cleared")
 
                     # Handle user outputs from the tool
                     for user_output in tool_call_result.user_outputs:
@@ -491,8 +464,8 @@ class GermanLearningAgent:
                     if content_item.type == "output_text":
                         response_text += content_item.text
 
-        # Don't add assistant message to history if history was cleared
-        if not was_cleared and response_text:
+        # Add assistant message to history
+        if response_text:
             self.add_assistant_message(response_text)
 
         # Yield message output if there's any text

@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import Iterable
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -7,6 +8,25 @@ from telegram.error import BadRequest
 from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput, UserOutput
 
 logger = logging.getLogger(__name__)
+
+
+def escape_markdown_v2(text: str) -> str:
+    """
+    Escape special characters for MarkdownV2 while preserving formatting.
+
+    MarkdownV2 requires escaping: _ * [ ] ( ) ~ ` > # + - = | { } . !
+    But we want to preserve: *bold*, _italic_, `code`, [links](url)
+    """
+    # Characters that need escaping in MarkdownV2
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+
+    # For now, do a simple escape of all special characters
+    # We'll handle preserving Markdown formatting in a future iteration if needed
+    def escape_char(match):
+        char = match.group(0)
+        return '\\' + char
+
+    return re.sub(f'([{re.escape(escape_chars)}])', escape_char, text)
 
 
 class AuthFilter(filters.MessageFilter):
@@ -80,7 +100,7 @@ class DeuBot:
         stats_text += f"Gesamt: {len(phrases)} Phrasen\n_Total: {len(phrases)} phrases_\n"
         stats_text += f"Fällig: {len(due_phrases)} Phrasen\n_Due for review: {len(due_phrases)} phrases_"
 
-        await update.message.reply_text(stats_text, parse_mode="Markdown")
+        await update.message.reply_text(stats_text, parse_mode="MarkdownV2")
 
     async def review_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.message:
@@ -97,12 +117,14 @@ class DeuBot:
         for output in outputs:
             if isinstance(output, MessageOutput):
                 if output.message:
-                    await message.reply_text(output.message, parse_mode="Markdown")
+                    escaped_message = escape_markdown_v2(output.message)
+                    await message.reply_text(escaped_message, parse_mode="MarkdownV2")
             elif isinstance(output, ShowReviewOutput):
                 await self._show_review_card(message, output)
             elif isinstance(output, LogOutput):
                 if output.message:
-                    await message.reply_text(f"`{output.message}`", parse_mode="Markdown")
+                    escaped_log = escape_markdown_v2(output.message)
+                    await message.reply_text(f"`{escaped_log}`", parse_mode="MarkdownV2")
 
     async def _show_review_card(self, message, review: ShowReviewOutput) -> None:
         self.review_state = {"phrase_id": review.phrase_id, "german": review.german, "explanation": review.explanation}
@@ -110,8 +132,9 @@ class DeuBot:
         keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{review.phrase_id}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"*{review.german}*\n\n_What does this mean?_"
-        await message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        escaped_german = escape_markdown_v2(review.german)
+        text = f"*{escaped_german}*\n\n_What does this mean?_"
+        await message.reply_text(text, reply_markup=reply_markup, parse_mode="MarkdownV2")
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         query = update.callback_query
@@ -154,9 +177,11 @@ class DeuBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"*{german}*\n\n{explanation}\n\n_How well did you remember?_"
+        escaped_german = escape_markdown_v2(german)
+        escaped_explanation = escape_markdown_v2(explanation)
+        text = f"*{escaped_german}*\n\n{escaped_explanation}\n\n_How well did you remember?_"
         try:
-            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="MarkdownV2")
         except BadRequest as e:
             if "message is not modified" not in str(e).lower():
                 raise
@@ -174,9 +199,10 @@ class DeuBot:
         self.review_state = {}
 
         try:
+            # The query.message.text is already escaped from when we created the reveal message
             await query.edit_message_text(
                 f"{query.message.text}\n\n✓ Rated as: {quality_name}",
-                parse_mode="Markdown",
+                parse_mode="MarkdownV2",
             )
         except BadRequest as e:
             if "message is not modified" not in str(e).lower():
