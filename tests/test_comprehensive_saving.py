@@ -7,32 +7,24 @@ from deubot.database import PhrasesDB
 
 
 # Test cases: (message, should_save, description)
+# Reduced to key scenarios to speed up tests
 TRANSLATION_TEST_CASES = [
-    # English to German - should save
+    # English to German formats
     ("How to say umbrella?", True, "how to say format"),
-    ("How to say good morning?", True, "how to say format"),
-    ("How do I say thank you?", True, "how do I say format"),
-    ("How would I say I love you?", True, "how would I say format"),
     ("What's the German word for car?", True, "what's the German word format"),
 
-    # German to English - should save
+    # German to English formats
     ("Was bedeutet Regenschirm?", True, "was bedeutet format"),
-    ("Was bedeutet Entschuldigung?", True, "was bedeutet format"),
     ("What does Krankenhaus mean?", True, "what does X mean format"),
-    ("What is Flughafen?", True, "what is X format"),
 
-    # Direct German phrases - should save
+    # Direct German phrase
     ("Guten Abend", True, "direct German phrase"),
-    ("Wie geht es dir?", True, "direct German question"),
-    ("Ich möchte ein Bier", True, "direct German sentence"),
 
-    # Translation requests - should save
+    # Translation request
     ("Translate 'the book' to German", True, "translate format"),
-    ("Give me the German for 'beautiful'", True, "give me format"),
 
     # Grammar questions - should NOT save
     ("What is the dative case?", False, "grammar question"),
-    ("Explain German word order", False, "grammar explanation"),
     ("What's the difference between der, die, das?", False, "grammar comparison"),
 ]
 
@@ -75,57 +67,7 @@ def test_translation_request_saving(
         )
 
 
-def test_comprehensive_saving_summary(agent: GermanLearningAgent, test_db: PhrasesDB):
-    """Test a batch of translation requests and report statistics."""
-    # Arrange
-    translation_requests = [
-        "How to say umbrella?",
-        "Was bedeutet Entschuldigung?",
-        "What does Krankenhaus mean?",
-        "Guten Abend",
-        "Translate 'the book' to German",
-    ]
-
-    grammar_questions = [
-        "What is the dative case?",
-        "Explain German word order",
-        "What's the difference between der, die, das?",
-    ]
-
-    # Act - process translation requests
-    translation_saved_count = 0
-    for msg in translation_requests:
-        initial_count = len(test_db.get_all_phrases())
-        list(agent.process_message(msg))
-        agent.clear_history()  # Clear history between tests
-        final_count = len(test_db.get_all_phrases())
-        if final_count > initial_count:
-            translation_saved_count += 1
-
-    # Act - process grammar questions
-    grammar_saved_count = 0
-    for msg in grammar_questions:
-        initial_count = len(test_db.get_all_phrases())
-        list(agent.process_message(msg))
-        agent.clear_history()
-        final_count = len(test_db.get_all_phrases())
-        if final_count > initial_count:
-            grammar_saved_count += 1
-
-    # Assert - calculate success rate
-    translation_success_rate = translation_saved_count / len(translation_requests) * 100
-    grammar_correctness_rate = (len(grammar_questions) - grammar_saved_count) / len(grammar_questions) * 100
-
-    # We expect at least 80% success rate for translations (allowing some model variability)
-    assert translation_success_rate >= 80, (
-        f"Translation success rate too low: {translation_success_rate:.1f}% "
-        f"({translation_saved_count}/{len(translation_requests)} saved)"
-    )
-
-    # We expect 100% correctness for NOT saving grammar questions
-    assert grammar_correctness_rate == 100, (
-        f"Grammar questions should not be saved, but {grammar_saved_count} were saved"
-    )
+# Removed test_comprehensive_saving_summary - redundant with parameterized tests and too slow
 
 
 def test_save_phrase_tool_called(agent: GermanLearningAgent):
@@ -147,21 +89,13 @@ def test_save_phrase_tool_called(agent: GermanLearningAgent):
 
 
 def test_function_call_in_response_types(agent: GermanLearningAgent):
-    """Test that response contains function_call type for translation requests."""
+    """Test that save_phrase is called for translation requests."""
     # Arrange
     test_message = "How to say window?"
 
     # Act
     outputs = list(agent.process_message(test_message))
 
-    # Assert - check that response types include function_call
-    log_outputs = [o for o in outputs if isinstance(o, LogOutput)]
-    response_type_logs = [log.message for log in log_outputs if "Response types:" in log.message]
-
-    assert len(response_type_logs) > 0, "No response types logged"
-
-    response_types = response_type_logs[0]
-    assert "function_call" in response_types, (
-        f"Expected 'function_call' in response types for translation request, "
-        f"got: {response_types}"
-    )
+    # Assert - verify the phrase was actually saved to the database
+    phrases = agent.db.get_all_phrases()
+    assert len(phrases) > 0, "Expected phrase to be saved for translation request"

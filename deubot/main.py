@@ -7,12 +7,25 @@ from deubot.systemd import try_notify_systemd
 from deubot.database import PhrasesDB
 from deubot.agent import GermanLearningAgent
 from deubot.bot import DeuBot
+import telegram
+import httpx
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+
+def configure_logger():
+    logging.getLogger(telegram.__name__).setLevel(logging.INFO)
+    logging.getLogger(httpx.__name__).setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+    # Exclude {asctime} from logging message because it is duplicated by systemd
+    logging.basicConfig(
+        format="[{levelname}] {name}: {message}", datefmt="%Y-%m-%d %H:%M:%S", style="{", level=logging.INFO
+    )
 
 
 def main():
+    configure_logger()
+    logger = logging.getLogger(__name__)
+
     load_dotenv(Path(".env"))
 
     telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")

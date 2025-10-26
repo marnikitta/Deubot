@@ -80,7 +80,7 @@ The bot is targeted towards people who don't know German. So all explanations, s
 When user requests a review session (says "review", "/review", "let's practice", etc.):
 
 1. **Start the review session (FIRST TIME ONLY):**
-   - Call get_next_due_phrases() to get a batch of phrases that need review
+   - Call get_next_due_phrases(limit=30) to get a batch of phrases that need review
    - If no phrases: tell the user there's nothing to review and STOP
    - If phrases found: Remember ALL the phrases in your memory
    - Pick the first one from the batch and generate a comprehensive English explanation
@@ -91,7 +91,7 @@ When user requests a review session (says "review", "/review", "let's practice",
    - This is your signal to show the NEXT card
    - Check if you have more phrases in your remembered batch
    - If yes: Pick the next phrase, generate explanation, call show_review() immediately
-   - If no more in batch: Call get_next_due_phrases() to get more, then call show_review()
+   - If no more in batch: Call get_next_due_phrases(limit=30) to get more, then call show_review()
    - If no more phrases exist: Output a completion message like "Great job! All reviews completed for today."
 
 3. **For each phrase, generate explanation with:**
@@ -135,27 +135,27 @@ English translation: Good evening. Usage: Used as a greeting in the evening. Con
 **A review session**
 ```
 User: "I want to start a review session"
-Assistant: [calls get_next_due_phrases(limit=10)]
+Assistant: [calls get_next_due_phrases(limit=30)]
 Assistant: [calls show_review(phrase_id="1", german="Guten Morgen", explanation="...")]
 User: "Reviewed Guten Morgen as Good"
 Assistant: [calls show_review(phrase_id="25", german="Danke schön", explanation="...")]
 
 [8 more reviews since get_next_due_phrases returned 10 phrases]
 
-Assistant: [calls get_next_due_phrases(limit=10)]
+Assistant: [calls get_next_due_phrases(limit=30)]
 ```
 
 **Completing review session**
 ```
 User: "Reviewed Das ist gut as Good"
-Assistant: [calls get_next_due_phrases(limit=10) - returns "No phrases due for review"]
+Assistant: [calls get_next_due_phrases(limit=30) - returns "No phrases due for review"]
 Assistant: "Ausgezeichnet! Alle Wiederholungen für heute abgeschlossen.\n<i>Excellent! All reviews completed for today.</i>"
 ```
 
 **User interrupting review (CORRECT)**
 ```
 User: "I want to start a review session"
-Assistant: [calls get_next_due_phrases(limit=10)]
+Assistant: [calls get_next_due_phrases(limit=30)]
 Assistant: [calls show_review(phrase_id="1", german="Guten Morgen", explanation="...")]
 User: "What does 'Entschuldigung' mean?"
 Assistant: "Entschuldigung means 'excuse me' or 'sorry'..."
@@ -300,12 +300,12 @@ class GermanLearningAgent:
             {
                 "type": "function",
                 "name": "get_next_due_phrases",
-                "description": "Get the next batch of German phrases that need review, returning a list of up to 10 phrases with their IDs and German text.",
+                "description": "Get the next batch of German phrases that need review, returning a list of German phrases as strings (default: 30, max: 100).",
                 "strict": True,
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "limit": {"type": "integer", "description": "Maximum number of phrases to return (default: 10)"}
+                        "limit": {"type": "integer", "description": "Maximum number of phrases to return (default: 30, max: 100)"}
                     },
                     "required": ["limit"],
                     "additionalProperties": False,
@@ -343,10 +343,11 @@ class GermanLearningAgent:
             )
 
         elif tool_name == "get_next_due_phrases":
-            limit = arguments.get("limit", 10)
+            limit = min(arguments.get("limit", 30), 100)
             phrases = self.db.get_due_phrases(limit=limit)
             if phrases:
-                phrases_list = "\n".join([f"- ID={p['id']}, German={p['german']}" for p in phrases])
+                german_phrases = [p['german'] for p in phrases]
+                phrases_list = "\n".join([f"- {german}" for german in german_phrases])
                 result = f"Found {len(phrases)} phrase(s) due for review:\n{phrases_list}"
             else:
                 result = "No phrases due for review"

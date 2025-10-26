@@ -89,6 +89,12 @@ class PhrasesDB:
         due_phrases = [
             asdict(phrase) for phrase in self.phrases.values() if phrase.next_review and phrase.next_review <= now
         ]
+
+        # If no phrases are due but database has phrases, return earliest phrases
+        if not due_phrases and self.phrases:
+            sorted_phrases = sorted(self.phrases.values(), key=lambda p: p.next_review if p.next_review else "")
+            due_phrases = [asdict(phrase) for phrase in sorted_phrases]
+
         if limit is not None:
             return due_phrases[:limit]
         return due_phrases
