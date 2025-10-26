@@ -98,4 +98,4 @@ The service is configured to:
 - When testing LLM interactions, design tests to be resilient to the probabilistic nature of model outputs. Check for semantic correctness and presence of key information rather than exact string matches. Tests should validate behavior patterns, not exact phrasing
 - Dont run tests if it is not required by the task. They are long and comprehensive for end2end testing
 - Use `logging.getLogger(__name__)` for logger instances to enable hierarchical filtering
-- Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Add context with `extra` parameter when needed
+- Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Include relevant context directly in log messages

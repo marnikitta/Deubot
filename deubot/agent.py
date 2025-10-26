@@ -69,7 +69,7 @@ class GermanLearningAgent:
             for german in phrases:
                 phrase_id = self.db.add_phrase(german=german)
                 saved_ids.append(phrase_id)
-                logger.info("Phrase saved", extra={"phrase_id": phrase_id, "german": german})
+                logger.info(f"Saved phrase '{german}' with ID {phrase_id}")
 
             if len(phrases) == 1:
                 result = f"Phrase saved successfully with ID: {saved_ids[0]}"
@@ -90,18 +90,23 @@ class GermanLearningAgent:
             if phrases:
                 phrases_list = "\n".join([f"- ID: {p['id']}, German: {p['german']}" for p in phrases])
                 result = f"Found {len(phrases)} phrase(s) due for review:\n{phrases_list}"
+                logger.info(f"Retrieved {len(phrases)} due phrases (limit={limit})")
             else:
                 result = "No phrases due for review"
+                logger.info("No phrases due for review")
             return ToolCallResult(result=result, terminal=False, user_outputs=[])
 
         elif tool_name == "show_review":
+            phrase_id = arguments["phrase_id"]
+            german = arguments["german"]
+            logger.info(f"Showing review for phrase '{german}' (ID: {phrase_id})")
             return ToolCallResult(
                 result="Review shown to user. Waiting for user rating.",
                 terminal=True,
                 user_outputs=[
                     ShowReviewOutput(
-                        phrase_id=arguments["phrase_id"],
-                        german=arguments["german"],
+                        phrase_id=phrase_id,
+                        german=german,
                         explanation=arguments["explanation"],
                     )
                 ],
@@ -116,8 +121,10 @@ class GermanLearningAgent:
                 german_phrases = [p["german"] for p in phrases]
                 phrases_list = "\n".join([f"- {german}" for german in german_phrases])
                 result = f"Found {len(phrases)} phrase(s) in vocabulary:\n{phrases_list}"
+                logger.info(f"Retrieved {len(phrases)} phrases from vocabulary (sort_by={sort_by}, ascending={ascending})")
             else:
                 result = "No phrases in vocabulary"
+                logger.info("No phrases in vocabulary")
             return ToolCallResult(result=result, terminal=False, user_outputs=[])
 
         return ToolCallResult(result="Unknown tool", terminal=True, user_outputs=[])
@@ -126,13 +133,8 @@ class GermanLearningAgent:
         """Clear the conversation history."""
         self.messages = []
 
-    def process_message(self, user_message: str) -> Generator[UserOutput, None, None]:
-        """Process a user message and yield structured outputs as they appear."""
-        input_list = list(self.messages)
-        input_list.append({"role": "user", "content": user_message})
-
-        yield TypingOutput()
-
+    def _call_llm(self, input_list: list[dict], iteration: int):
+        """Call the LLM API and log statistics."""
         response = self.client.responses.create(  # type: ignore
             model=self.model,
             instructions=self.system_prompt,
@@ -141,6 +143,28 @@ class GermanLearningAgent:
             reasoning={"effort": "minimal"},
             text={"verbosity": "low"},
         )
+
+        # Log API call stats
+        has_reasoning = any(item.type == "reasoning" for item in response.output)
+        tool_calls = [item.name for item in response.output if item.type == "function_call"]
+        tool_calls_str = f", tool_calls=[{', '.join(tool_calls)}]" if tool_calls else ""
+        reasoning_str = ", with reasoning" if has_reasoning else ""
+        logger.info(
+            f"GPT API call completed (iteration {iteration}){reasoning_str}{tool_calls_str}, "
+            f"input_tokens={getattr(response.usage, 'input_tokens', 'N/A')}, "
+            f"output_tokens={getattr(response.usage, 'output_tokens', 'N/A')}"
+        )
+
+        return response
+
+    def process_message(self, user_message: str) -> Generator[UserOutput, None, None]:
+        """Process a user message and yield structured outputs as they appear."""
+        input_list = list(self.messages)
+        input_list.append({"role": "user", "content": user_message})
+
+        yield TypingOutput()
+
+        response = self._call_llm(input_list, iteration=1)
 
         max_iterations = 10
         iterations = 0
@@ -211,14 +235,7 @@ class GermanLearningAgent:
 
             yield TypingOutput()
 
-            response = self.client.responses.create(  # type: ignore
-                model=self.model,
-                instructions=self.system_prompt,
-                input=input_list,
-                tools=self.tools,
-                reasoning={"effort": "minimal"},
-                text={"verbosity": "low"},
-            )
+            response = self._call_llm(input_list, iteration=iterations + 1)
 
         response_text = ""
         for output_item in response.output:

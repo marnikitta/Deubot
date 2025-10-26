@@ -34,7 +34,7 @@ class PhrasesDB:
                         phrase_data["id"] = phrase_data.pop("_id")
                     phrase = Phrase(**phrase_data)
                     self.phrases[phrase.id] = phrase
-            logger.info("Database loaded", extra={"phrase_count": len(self.phrases)})
+            logger.info(f"Loaded {len(self.phrases)} phrases from database")
 
     def _save(self) -> None:
         if not self.db_path:
@@ -83,10 +83,7 @@ class PhrasesDB:
         next_review_date += timedelta(days=phrase.interval_days)
         phrase.next_review = next_review_date.isoformat()
 
-        logger.info(
-            "Review updated",
-            extra={"phrase_id": phrase_id, "quality": quality, "next_interval_days": phrase.interval_days},
-        )
+        logger.info(f"Phrase {phrase_id} reviewed as quality {quality}, next review in {phrase.interval_days} days")
         self._save()
 
     def get_all_phrases(self) -> list[dict[str, Any]]:
