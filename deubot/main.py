@@ -33,7 +33,6 @@ def main():
     openai_api_key = os.getenv("OPENAI_API_KEY")
     openai_model = os.getenv("OPENAI_MODEL", "gpt-4o")
     db_path = os.getenv("PHRASES_DB_PATH", "./data/phrases.json.gz")
-    enable_logs = os.getenv("ENABLE_LOGS", "true").lower() in ("true", "1", "yes")
 
     if not telegram_token:
         logger.error("TELEGRAM_BOT_TOKEN not set in .env")
@@ -55,13 +54,8 @@ def main():
 
     logger.info("Initializing DeuBot...")
     db = PhrasesDB(db_path)
-    agent = GermanLearningAgent(api_key=openai_api_key, model=openai_model, db=db, enable_logs=enable_logs)
+    agent = GermanLearningAgent(api_key=openai_api_key, model=openai_model, db=db)
     bot = DeuBot(token=telegram_token, allowed_user_id=allowed_user_id, agent=agent)
-
-    if enable_logs:
-        logger.info("Logging enabled")
-    else:
-        logger.info("Logging disabled")
 
     try_notify_systemd()
     logger.info("DeuBot is running...")

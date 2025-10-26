@@ -32,6 +32,7 @@ class DeuBot:
         self.agent = agent
         self.last_reset: datetime | None = None
         self.review_state: dict = {}
+        self.debug_enabled: bool = False
 
     def _should_reset_daily(self) -> bool:
         if self.last_reset is None:
@@ -56,7 +57,8 @@ class DeuBot:
             "Befehle / <i>Commands:</i>\n"
             "/clear - Verlauf löschen / <i>Clear history</i>\n"
             "/stats - Statistiken / <i>Show statistics</i>\n"
-            "/review - Wiederholung starten / <i>Start review session</i>",
+            "/review - Wiederholung starten / <i>Start review session</i>\n"
+            "/debug - Debug-Logging umschalten / <i>Toggle debug logging</i>",
             parse_mode="HTML",
         )
 
@@ -90,6 +92,16 @@ class DeuBot:
         except Exception as e:
             await update.message.reply_text(f"Fehler / Error: {str(e)}")
             raise
+
+    async def debug_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not update.message:
+            return
+
+        self.debug_enabled = not self.debug_enabled
+        self.agent.enable_logs = self.debug_enabled
+
+        status = "aktiviert / enabled" if self.debug_enabled else "deaktiviert / disabled"
+        await update.message.reply_text(f"Debug-Logging {status}", parse_mode="HTML")
 
     async def _handle_outputs(self, message, outputs: Iterable[UserOutput]) -> None:
         for output in outputs:
@@ -219,6 +231,7 @@ class DeuBot:
         application.add_handler(CommandHandler("clear", self.clear_command, filters=auth_filter))
         application.add_handler(CommandHandler("stats", self.stats_command, filters=auth_filter))
         application.add_handler(CommandHandler("review", self.review_command, filters=auth_filter))
+        application.add_handler(CommandHandler("debug", self.debug_command, filters=auth_filter))
         application.add_handler(CallbackQueryHandler(self.handle_callback))
         application.add_handler(MessageHandler(auth_filter & filters.TEXT & ~filters.COMMAND, self.handle_message))
 

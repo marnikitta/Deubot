@@ -50,7 +50,7 @@ def _load_system_prompt() -> str:
 
 
 class GermanLearningAgent:
-    def __init__(self, api_key: str, model: str, db: PhrasesDB, enable_logs: bool = True):
+    def __init__(self, api_key: str, model: str, db: PhrasesDB, enable_logs: bool = False):
         self.client = OpenAI(api_key=api_key)
         self.model = model
         self.db = db
