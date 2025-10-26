@@ -151,6 +151,10 @@ When NOT to Use:
 Explanation Format (use this structure):
 <b>[English translation]</b>
 
+<b>Pronunciation:</b>
+IPA: [formal IPA transcription]
+Approx: [English approximation, e.g., "KROH-ah-sahnt"]
+
 One-two sentences of clear context and usage.
 
 <b>Usage:</b>
@@ -177,7 +181,7 @@ One short, definitive point if relevant.
                     },
                     "explanation": {
                         "type": "string",
-                        "description": "Comprehensive English explanation in HTML format. Include: <b>translation</b>, context, 2-3 examples with translations, grammar notes, and similar phrases. Use HTML tags: <b> for bold, <i> for italic. Example: '<b>Good morning</b>\\n\\nA common morning greeting used until roughly 11 AM.\\n\\nExamples:\\n• Guten Morgen, wie geht\\'s?...'",
+                        "description": "Comprehensive English explanation in HTML format. Include: <b>translation</b>, <b>Pronunciation</b> (IPA and English approximation), context, usage points, 2-3 examples with translations, and grammar notes. Use HTML tags: <b> for bold, <i> for italic. Example: '<b>Good morning</b>\\n\\n<b>Pronunciation:</b>\\nIPA: [ˈɡuːtn̩ ˈmɔʁɡn̩]\\nApprox: GOO-ten MOR-gen\\n\\nA common morning greeting used until roughly 11 AM.\\n\\n<b>Usage:</b>\\n• Used from waking up until around 11 AM...'",
                     },
                 },
                 "required": ["phrase_id", "german", "explanation"],

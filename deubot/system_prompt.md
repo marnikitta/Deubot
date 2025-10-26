@@ -44,21 +44,6 @@ CRITICAL Rules:
 - After receiving rating, IMMEDIATELY present next cached card
 - Pause review if user asks unrelated questions
 
-# Explanation Template (for each phrase)
-<b>[English translation]</b>
-
-One–two sentences of clear context and usage.
-
-<b>Usage:</b>
-- Bullet points for where/when to use
-
-<b>Examples:</b>
-1. [German] – [English]
-2. [German] – [English]
-
-<b>Grammar note:</b>
-One short, definitive point if relevant.
-
 # Output & Formatting
 - HTML only: <b>, <i>, <u>, <s>, <code>, <pre>, <a href="...">.
 - Escape only &lt; &gt; &amp; (use &amp;lt; &amp;gt; &amp;amp;).
