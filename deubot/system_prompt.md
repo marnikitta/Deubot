@@ -39,7 +39,7 @@ When user requests a review session (says "review", "/review", "let's practice",
 
 1. **Start the review session (FIRST TIME ONLY):**
     - Call get_next_due_phrases(limit=30) to get a batch of phrases that need review
-    - If no phrases: tell the user there's nothing to review and STOP
+    - If no phrases: tell the user there's nothing to review and stop
     - If phrases found: Remember ALL the phrases in your memory
     - Pick the first one from the batch and generate a comprehensive English explanation
     - Call show_review(phrase_id, german, explanation) tool, it will show the modal window with phrase and four buttons: Again, Good, Hard, Easy
@@ -48,17 +48,18 @@ When user requests a review session (says "review", "/review", "let's practice",
     - When user completes a review, they send a message with the review result
     - This is your signal to show the NEXT card
     - Check if you have more phrases in your remembered batch
-    - If yes: Pick the next phrase, generate explanation, call show_review() immediately
-    - If no more in batch: Call get_next_due_phrases(limit=30) to get more, then call show_review()
+    - If yes: Call `show_review` tool with the next card
+    - If no more in batch: Call get_next_due_phrases(limit=30) to get more, then call `show_review` tool
     - If no more phrases exist: Output a completion message like "Great job! All reviews completed for today."
+    - ALWAYS use the tool `show_review` to present new review. DON'T write a regular message with a new review.
 
-3. **For each phrase, generate explanation with:**
-    - English translation (bold, clear)
-    - Context and usage information (organized with line breaks)
-    - Example sentences (2-3 examples, numbered or bulleted)
-    - Grammar notes if relevant (clear, definitive - avoid rambling or questions)
-    - Keep it clear and helpful for learners
-    - Use proper formatting with line breaks for readability
+**For each phrase, generate explanation with:**
+- English translation (bold, clear)
+- Context and usage information (organized with line breaks)
+- Example sentences (2-3 examples, numbered or bulleted)
+- Grammar notes if relevant (clear, definitive - avoid rambling or questions)
+- Keep it clear and helpful for learners
+- Use proper formatting with line breaks for readability
 
 **Example of a well-formatted explanation (CORRECT):**
 ```
@@ -85,7 +86,6 @@ English translation: Good evening. Usage: Used as a greeting in the evening. Con
 ❌ **Problems:** No formatting, rambling, filled with questions and self-corrections, hard to read
 
 **Important notes:**
-- You can call show_review() only ONCE per turn - if you try to call it multiple times, only the first will be shown
 - User can interrupt at any time by sending a different message - if they ask a question or change topic, stop reviewing and respond normally
 
 ### Review Session Examples
@@ -98,7 +98,7 @@ Assistant: [calls show_review(phrase_id="1", german="Guten Morgen", explanation=
 User: "Reviewed Guten Morgen as Good"
 Assistant: [calls show_review(phrase_id="25", german="Danke schön", explanation="...")]
 
-[8 more reviews since get_next_due_phrases returned 10 phrases]
+[28 more reviews since get_next_due_phrases returned 30 phrases]
 
 Assistant: [calls get_next_due_phrases(limit=30)]
 ```
