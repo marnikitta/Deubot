@@ -24,7 +24,12 @@ class LogOutput:
     message: str
 
 
-UserOutput = MessageOutput | ShowReviewOutput | LogOutput
+@dataclass
+class TypingOutput:
+    pass
+
+
+UserOutput = MessageOutput | ShowReviewOutput | LogOutput | TypingOutput
 
 
 @dataclass
@@ -284,7 +289,7 @@ class GermanLearningAgent:
             },
             {
                 "type": "function",
-                "name": "get_next_due_phrase",
+                "name": "get_next_due_phrases",
                 "description": "Get the next batch of German phrases that need review, returning a list of up to 10 phrases with their IDs and German text.",
                 "strict": True,
                 "parameters": {
@@ -372,8 +377,7 @@ class GermanLearningAgent:
         for msg in self.messages:
             input_list.append({"role": msg["role"], "content": msg["content"]})
 
-        if self.enable_logs:
-            yield LogOutput(message=f"Processing: {user_message[:50]}...")
+        yield TypingOutput()
 
         response = self.client.responses.create(  # type: ignore
             model=self.model,
@@ -394,10 +398,13 @@ class GermanLearningAgent:
 
             input_list += response.output
 
-            # Debug logging to see what we got from the model
+            # Process reasoning traces
             if self.enable_logs:
-                output_types = [item.type for item in response.output]
-                yield LogOutput(message=f"Response types: {output_types}")
+                for output_item in response.output:
+                    if output_item.type == "reasoning" and output_item.content:
+                        for content_item in output_item.content:
+                            if content_item.type == "output_text":
+                                yield LogOutput(message=f"Reasoning: {content_item.text}")
 
             for output_item in response.output:
                 if output_item.type == "function_call":
@@ -405,7 +412,7 @@ class GermanLearningAgent:
                     tool_args = json.loads(output_item.arguments)
 
                     if self.enable_logs:
-                        args_str = ", ".join([f"{k}={v[:10]}" for k, v in tool_args.items()])
+                        args_str = ", ".join([f"{k}={str(v)[:20]}" for k, v in tool_args.items()])
                         yield LogOutput(message=f"Tool call: {tool_name}({args_str})")
 
                     tool_call_result = self._execute_tool(tool_name, tool_args)
@@ -447,6 +454,8 @@ class GermanLearningAgent:
 
             if not has_continuation_tools:
                 break
+
+            yield TypingOutput()
 
             response = self.client.responses.create(  # type: ignore
                 model=self.model,

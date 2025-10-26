@@ -5,7 +5,7 @@ from typing import Iterable
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from telegram.error import BadRequest
-from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput, UserOutput
+from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput, TypingOutput, UserOutput
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +18,15 @@ def escape_markdown_v2(text: str) -> str:
     But we want to preserve: *bold*, _italic_, `code`, [links](url)
     """
     # Characters that need escaping in MarkdownV2
-    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    escape_chars = r"_*[]()~`>#+-=|{}.!"
 
     # For now, do a simple escape of all special characters
     # We'll handle preserving Markdown formatting in a future iteration if needed
     def escape_char(match):
         char = match.group(0)
-        return '\\' + char
+        return "\\" + char
 
-    return re.sub(f'([{re.escape(escape_chars)}])', escape_char, text)
+    return re.sub(f"([{re.escape(escape_chars)}])", escape_char, text)
 
 
 class AuthFilter(filters.MessageFilter):
@@ -115,16 +115,16 @@ class DeuBot:
 
     async def _handle_outputs(self, message, outputs: Iterable[UserOutput]) -> None:
         for output in outputs:
-            if isinstance(output, MessageOutput):
+            if isinstance(output, TypingOutput):
+                await message.chat.send_action(action="typing")
+            elif isinstance(output, MessageOutput):
                 if output.message:
-                    escaped_message = escape_markdown_v2(output.message)
-                    await message.reply_text(escaped_message, parse_mode="MarkdownV2")
+                    await message.reply_text(output.message)
             elif isinstance(output, ShowReviewOutput):
                 await self._show_review_card(message, output)
             elif isinstance(output, LogOutput):
                 if output.message:
-                    escaped_log = escape_markdown_v2(output.message)
-                    await message.reply_text(f"`{escaped_log}`", parse_mode="MarkdownV2")
+                    await message.reply_text(f"[{output.message}]")
 
     async def _show_review_card(self, message, review: ShowReviewOutput) -> None:
         self.review_state = {"phrase_id": review.phrase_id, "german": review.german, "explanation": review.explanation}
