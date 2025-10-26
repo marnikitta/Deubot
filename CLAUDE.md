@@ -50,6 +50,8 @@ The default deployment host is `deubot`, configured in the Makefile. Change `hos
 - **dotenv.py**: Custom .env file parser that loads environment variables from a `.env` file, supporting quoted and unquoted values
 - **systemd.py**: Systemd integration using Type=notify protocol to signal service readiness via NOTIFY_SOCKET
 
+**Agent Design Reference**: For principles of good agent design and tool calling patterns, see [Decoding Claude Code](https://minusx.ai/blog/decoding-claude-code/)
+
 ### Database & Spaced Repetition
 
 SM-2 based spaced repetition with JSON persistence. Quality ratings adjust ease factors and intervals for optimal review scheduling.
@@ -93,6 +95,7 @@ The service is configured to:
 - Return typed objects instead of magic strings or status codes
 - Use boolean flags with clear names (e.g., terminal, enable_logs)
 - Keep tests robust. Dont use mocks in tests
+- When testing LLM interactions, design tests to be resilient to the probabilistic nature of model outputs. Check for semantic correctness and presence of key information rather than exact string matches. Tests should validate behavior patterns, not exact phrasing
 - Dont run tests if it is not required by the task. They are long and comprehensive for end2end testing
 - Use `logging.getLogger(__name__)` for logger instances to enable hierarchical filtering
 - Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Add context with `extra` parameter when needed
