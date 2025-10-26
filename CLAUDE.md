@@ -92,3 +92,6 @@ The service is configured to:
 - Return typed objects instead of magic strings or status codes
 - Use boolean flags with clear names (e.g., terminal, enable_logs)
 - Keep tests robust. Dont use mocks in tests
+- Dont run tests if it is not required by the task. They are long and comprehensive for end2end testing
+- Use `logging.getLogger(__name__)` for logger instances to enable hierarchical filtering
+- Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Add context with `extra` parameter when needed

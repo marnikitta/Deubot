@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Generator
@@ -6,6 +7,8 @@ from typing import Any, Generator
 from openai import OpenAI
 
 from deubot.database import PhrasesDB
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -71,7 +74,7 @@ class GermanLearningAgent:
             {
                 "type": "function",
                 "name": "get_next_due_phrases",
-                "description": "Get the next batch of German phrases that need review, returning a list of German phrases as strings (default: 30, max: 100).",
+                "description": "Get the next batch of German phrases that need review, returning phrase IDs and German text for each phrase (default: 30, max: 100).",
                 "strict": True,
                 "parameters": {
                     "type": "object",
@@ -136,6 +139,7 @@ class GermanLearningAgent:
         if tool_name == "save_phrase":
             german = arguments["german"]
             phrase_id = self.db.add_phrase(german=german)
+            logger.info("Phrase saved", extra={"phrase_id": phrase_id, "german": german})
             return ToolCallResult(
                 result=f"Phrase saved successfully with ID: {phrase_id}",
                 terminal=False,
@@ -146,8 +150,7 @@ class GermanLearningAgent:
             limit = min(arguments.get("limit", 30), 100)
             phrases = self.db.get_due_phrases(limit=limit)
             if phrases:
-                german_phrases = [p["german"] for p in phrases]
-                phrases_list = "\n".join([f"- {german}" for german in german_phrases])
+                phrases_list = "\n".join([f"- ID: {p['id']}, German: {p['german']}" for p in phrases])
                 result = f"Found {len(phrases)} phrase(s) due for review:\n{phrases_list}"
             else:
                 result = "No phrases due for review"

@@ -1,9 +1,12 @@
 import gzip
 import json
+import logging
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Literal
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -31,6 +34,7 @@ class PhrasesDB:
                         phrase_data["id"] = phrase_data.pop("_id")
                     phrase = Phrase(**phrase_data)
                     self.phrases[phrase.id] = phrase
+            logger.info("Database loaded", extra={"phrase_count": len(self.phrases)})
 
     def _save(self) -> None:
         if not self.db_path:
@@ -79,6 +83,7 @@ class PhrasesDB:
         next_review_date += timedelta(days=phrase.interval_days)
         phrase.next_review = next_review_date.isoformat()
 
+        logger.info("Review updated", extra={"phrase_id": phrase_id, "quality": quality, "next_interval_days": phrase.interval_days})
         self._save()
 
     def get_all_phrases(self) -> list[dict[str, Any]]:

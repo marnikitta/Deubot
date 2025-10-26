@@ -198,6 +198,7 @@ class DeuBot:
             return
 
         user_text = update.message.text
+        logger.info("User message received", extra={"user_id": self.allowed_user_id, "text_length": len(user_text)})
 
         if self._should_reset_daily():
             self._clear_history()
@@ -206,6 +207,7 @@ class DeuBot:
             outputs = self.agent.process_message(user_text)
             await self._handle_outputs(update.message, outputs)
         except Exception as e:
+            logger.error("Message processing failed", extra={"error": str(e)})
             await update.message.reply_text(f"Fehler / Error: {str(e)}")
             raise
 
