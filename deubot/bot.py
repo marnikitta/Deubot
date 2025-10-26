@@ -122,7 +122,7 @@ class DeuBot:
         keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{review.phrase_id}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{review.german}</b>\n\n<i>What does this mean?</i>"
+        text = f"<b>{review.german}</b>\n\n<i>Was bedeutet das? / What does this mean?</i>"
         await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -156,17 +156,17 @@ class DeuBot:
 
         keyboard = [
             [
-                InlineKeyboardButton("Nochmal / Again (1)", callback_data=f"quality_{phrase_id}_1"),
+                InlineKeyboardButton("Leicht / Easy (4)", callback_data=f"quality_{phrase_id}_4"),
                 InlineKeyboardButton("Schwer / Hard (2)", callback_data=f"quality_{phrase_id}_2"),
             ],
             [
                 InlineKeyboardButton("Gut / Good (3)", callback_data=f"quality_{phrase_id}_3"),
-                InlineKeyboardButton("Leicht / Easy (4)", callback_data=f"quality_{phrase_id}_4"),
+                InlineKeyboardButton("Nochmal / Again (1)", callback_data=f"quality_{phrase_id}_1"),
             ],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{german}</b>\n\n{explanation}\n\n<i>How well did you remember?</i>"
+        text = f"<b>{german}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
         try:
             await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
         except BadRequest as e:
@@ -180,7 +180,7 @@ class DeuBot:
 
         german = self.review_state["german"]
         explanation = self.review_state["explanation"]
-        quality_names = {1: "Again", 2: "Hard", 3: "Good", 4: "Easy"}
+        quality_names = {1: "Nochmal / Again", 2: "Schwer / Hard", 3: "Gut / Good", 4: "Leicht / Easy"}
         quality_name = quality_names.get(quality, "")
 
         self.agent.db.update_review(phrase_id, quality)
@@ -188,7 +188,7 @@ class DeuBot:
 
         try:
             text = (
-                f"<b>{german}</b>\n\n{explanation}\n\n<i>How well did you remember?</i>\n\n✓ Rated as: {quality_name}"
+                f"<b>{german}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             )
             await query.edit_message_text(
                 text,
