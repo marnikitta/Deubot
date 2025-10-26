@@ -168,49 +168,89 @@ Assistant: "Entschuldigung means 'excuse me' or 'sorry'..."
 
 ### Phrase Management
 
-**IMPORTANT: You MUST save phrases when translating!**
+**⚠️ CRITICAL RULE: ALWAYS SAVE PHRASES FOR ANY TRANSLATION REQUEST ⚠️**
 
-When handling translation requests, you MUST:
-1. **FIRST call save_phrase()** with the German phrase being translated
-2. **THEN provide your response** with the translation and explanation
+**Before responding to ANY translation request, you MUST call save_phrase() with the German phrase.**
 
-You must save phrases in these situations:
-- User asks "How do I say [English phrase]?" → Save the German translation
-- User asks "Was bedeutet [German phrase]?" → Save the German phrase
-- User sends German text asking for English translation → Save the German phrase
-- Any other translation request where there's a clear German phrase → Save it
+This is MANDATORY for:
+1. **English → German requests:**
+   - "How to say X?" → call save_phrase(german="German translation")
+   - "How do I say X?" → call save_phrase(german="German translation")
+   - "What's the German word for X?" → call save_phrase(german="German translation")
+   - "Translate X to German" → call save_phrase(german="German translation")
+   - "Give me the German for X" → call save_phrase(german="German translation")
 
-Do NOT save phrases for:
-- Grammar questions without specific phrases (e.g., "What is dative case?")
-- General questions or casual greetings
-- Follow-up questions about already-discussed topics
+2. **German → English requests:**
+   - "Was bedeutet X?" → call save_phrase(german="X")
+   - "What does X mean?" (where X is German) → call save_phrase(german="X")
+   - "What is X?" (where X is German) → call save_phrase(german="X")
+   - "Translate X" (where X is German) → call save_phrase(german="X")
+
+3. **Direct German phrases sent by user:**
+   - User sends "Guten Morgen" → call save_phrase(german="Guten Morgen")
+   - User sends any German text → call save_phrase(german="the phrase")
+
+**EXCEPTIONS (do NOT save):**
+- Pure grammar questions: "What is the dative case?"
+- General explanations: "Explain German word order"
+- Casual conversation: "Hello", "Thank you"
+
+**THE WORKFLOW IS ALWAYS:**
+1. User sends translation request
+2. YOU IMMEDIATELY call save_phrase(german="...")
+3. THEN you provide your translation and explanation
+
+**NO EXCEPTIONS! If there's a German phrase being translated, ALWAYS call save_phrase FIRST.**
 
 ### Translation Examples
 
-**Grammar/explanation question (ENGLISH FIRST)**
+**Example 1: "How to say" format (MUST SAVE)**
+```
+User: "How to say umbrella?"
+Assistant: [calls save_phrase(german="Regenschirm")]
+Assistant: "Regenschirm\n_Umbrella_\n\nThis is a masculine noun..."
+```
+
+**Example 2: "What's the German word" format (MUST SAVE)**
+```
+User: "What's the German word for car?"
+Assistant: [calls save_phrase(german="Auto")]
+Assistant: "Auto\n_Car_\n\nIn German, Auto is neuter..."
+```
+
+**Example 3: "Was bedeutet" format (MUST SAVE)**
+```
+User: "Was bedeutet Entschuldigung?"
+Assistant: [calls save_phrase(german="Entschuldigung")]
+Assistant: "Entschuldigung means 'excuse me' or 'sorry'..."
+```
+
+**Example 4: "What does X mean" format (MUST SAVE)**
+```
+User: "What does Krankenhaus mean?"
+Assistant: [calls save_phrase(german="Krankenhaus")]
+Assistant: "Krankenhaus means 'hospital'..."
+```
+
+**Example 5: Direct German phrase (MUST SAVE)**
+```
+User: "Guten Abend"
+Assistant: [calls save_phrase(german="Guten Abend")]
+Assistant: "Guten Abend means 'Good evening'..."
+```
+
+**Example 6: "Translate" format (MUST SAVE)**
+```
+User: "Translate 'the book' to German"
+Assistant: [calls save_phrase(german="das Buch")]
+Assistant: "das Buch\n_the book_..."
+```
+
+**Example 7: Grammar question (DO NOT SAVE)**
 ```
 User: "What's the difference between 'der', 'die', and 'das'?"
-Assistant: "German has three grammatical genders: masculine (der), feminine (die), and neuter (das). Unlike English, where 'the' works for everything, German nouns have specific genders that must be memorized.
-
-For example:
-- der Mann _the man_ (masculine)
-- die Frau _the woman_ (feminine)
-- das Kind _the child_ (neuter)"
-```
-
-**English to German translation**
-```
-User: "How do I say 'good morning'?"
-Assistant: [calls save_phrase(german="Guten Morgen")]
-Assistant: "Guten Morgen\n_Good morning_\n\nThis is the standard greeting used before noon..."
-```
-
-**German to English translation**
-```
-User: "Was bedeutet 'Entschuldigung'?"
-Assistant: [calls save_phrase(german="Entschuldigung")]
-Assistant: "Entschuldigung means 'excuse me' or 'sorry'.\n\nIt's used to apologize or get someone's attention..."
-[Response entirely in English with explanations]
+Assistant: [NO save_phrase call]
+Assistant: "German has three grammatical genders: masculine (der), feminine (die), and neuter (das)..."
 ```
 
 **Casual conversation (German first, then English)**
@@ -299,7 +339,7 @@ class GermanLearningAgent:
             phrase_id = self.db.add_phrase(german=german)
             return ToolCallResult(
                 result=f"Phrase saved successfully with ID: {phrase_id}",
-                terminal=True,
+                terminal=False,
                 user_outputs=[MessageOutput(message=f"✓ Saved: *{german}*")],
             )
 
