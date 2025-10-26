@@ -60,14 +60,28 @@ class GermanLearningAgent:
         self.tools = get_tools()
 
     def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> ToolCallResult:
-        if tool_name == "save_phrase":
-            german = arguments["german"]
-            phrase_id = self.db.add_phrase(german=german)
-            logger.info("Phrase saved", extra={"phrase_id": phrase_id, "german": german})
+        if tool_name == "save_phrases":
+            phrases = arguments["phrases"]
+            if not isinstance(phrases, list):
+                phrases = [phrases]
+
+            saved_ids = []
+            for german in phrases:
+                phrase_id = self.db.add_phrase(german=german)
+                saved_ids.append(phrase_id)
+                logger.info("Phrase saved", extra={"phrase_id": phrase_id, "german": german})
+
+            if len(phrases) == 1:
+                result = f"Phrase saved successfully with ID: {saved_ids[0]}"
+                user_message = f"✓ Saved: <b>{phrases[0]}</b>"
+            else:
+                result = f"{len(phrases)} phrases saved successfully with IDs: {', '.join(saved_ids)}"
+                user_message = f"✓ Saved {len(phrases)} phrases: <b>{', '.join(phrases[:5])}</b>{'...' if len(phrases) > 5 else ''}"
+
             return ToolCallResult(
-                result=f"Phrase saved successfully with ID: {phrase_id}",
+                result=result,
                 terminal=False,
-                user_outputs=[MessageOutput(message=f"✓ Saved: <b>{german}</b>")],
+                user_outputs=[MessageOutput(message=user_message)],
             )
 
         elif tool_name == "get_next_due_phrases":

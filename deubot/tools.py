@@ -22,45 +22,64 @@ def get_tools() -> list[dict[str, Any]]:
     return [
         {
             "type": "function",
-            "name": "save_phrase",
-            "description": """Save a new German phrase to the learning database for spaced repetition review.
+            "name": "save_phrases",
+            "description": """Save one or more German phrases to the learning database for spaced repetition review.
 
-CRITICAL: MUST call this BEFORE providing any response that translates or explains a German phrase.
+CRITICAL: MUST call this BEFORE providing any response that translates or explains German phrase(s).
 
 Usage Pattern:
-1. Detect if a concrete German phrase will be produced or interpreted
-2. Call save_phrase with the German text
+1. Detect if concrete German phrase(s) will be produced or interpreted
+2. Call save_phrases with list of German texts (even if just one phrase)
 3. Then provide your response per language policy
 
 DO NOT call for grammar questions, general explanations, or language concepts.
 DO NOT call when user explicitly asks not to save.
 
-When to Use:
-- User asks "How do you say umbrella?" → MUST save "Regenschirm" BEFORE responding
-- User asks "What does Krankenhaus mean?" → MUST save "Krankenhaus" BEFORE explaining
-- User provides German text "Guten Abend" → MUST save "Guten Abend" BEFORE translating
-- User asks "Translate 'the book' to German" → MUST save "das Buch" BEFORE responding
+BATCH SAVING:
+Always pass phrases as an array, even for a single phrase. This tool is optimized for batch operations.
+
+Single Phrase Examples:
+- User: "How do you say umbrella?" → save_phrases(["der Regenschirm"]) BEFORE responding
+- User: "What does Krankenhaus mean?" → save_phrases(["Krankenhaus"]) BEFORE explaining
+- User: "Guten Abend" → save_phrases(["Guten Abend"]) BEFORE translating
+- User: "Translate 'the book' to German" → save_phrases(["das Buch"]) BEFORE responding
+
+Batch Examples (Multiple Phrases):
+- User: "Translate: hello, goodbye, thank you" → save_phrases(["Hallo", "Auf Wiedersehen", "Danke"]) BEFORE responding
+- User: "What are Tisch, Stuhl, Lampe?" → save_phrases(["der Tisch", "der Stuhl", "die Lampe"]) BEFORE translating
+- User: "Save 5 different common domestic animals" → save_phrases(["der Hund", "die Katze", "das Pferd", "der Hamster", "der Fisch"]) BEFORE listing them
+- User: "Give me 10 fruits in German" → save_phrases([all 10 fruit words with articles]) BEFORE providing list
+- User provides list of 100 words to learn → save_phrases([all 100 phrases]) BEFORE responding
+
+Large Batch Examples:
+- Vocabulary list import: save_phrases([hundreds or thousands of phrases]) - no limit on array size
+- Topic vocabulary: save_phrases([all relevant phrases for the topic])
+- User: "Save common phrases for traveling" → save_phrases([20-30 travel phrases])
 
 When NOT to Use:
-- User asks "What is the dative case?" → Grammar concept only
-- User asks "What's the difference between der/die/das?" → Grammar explanation only
+- User: "What is the dative case?" → Grammar concept only (no concrete phrases)
+- User: "What's the difference between der/die/das?" → Grammar explanation only
 - User asks about conjugation rules → General concept only
-- User says "just explain, don't save" → Respect user preference
+- User: "just explain, don't save" → Respect user preference
 
 Important Notes:
-- Save phrases in their natural form with articles for nouns: "der Tisch" not "Tisch"
+- ALWAYS pass an array, even for single phrases: ["der Hund"] not "der Hund"
+- Save phrases with articles for nouns: "der Tisch" not "Tisch"
 - Include context when relevant: "Guten Morgen" not just "Morgen"
+- Array can contain any number of phrases: 1, 10, 100, 1000+
+- Tool handles duplicates automatically (won't save the same phrase twice)
 """,
             "strict": True,
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "german": {
-                        "type": "string",
-                        "description": "The German word or phrase to be saved, exactly as you explained it to the user. Include articles for nouns (e.g., 'der Hund', not 'Hund').",
+                    "phrases": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of German phrases to save. Each phrase should include articles for nouns (e.g., 'der Hund', not 'Hund'). Examples: ['der Hund'], ['Hallo', 'Tschüss', 'Danke'], or even 1000+ phrases.",
                     }
                 },
-                "required": ["german"],
+                "required": ["phrases"],
                 "additionalProperties": False,
             },
         },

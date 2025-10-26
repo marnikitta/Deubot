@@ -23,7 +23,9 @@ def test_phrase_saving_basic(agent: GermanLearningAgent, test_db: PhrasesDB):
     # Check that "Wetter" was saved (may include article like "das Wetter")
     all_phrases = test_db.get_all_phrases()
     saved_phrases = [p["german"] for p in all_phrases]
-    assert any("Wetter" in phrase for phrase in saved_phrases), f"Expected 'Wetter' (possibly with article) to be saved, got: {saved_phrases}"
+    assert any(
+        "Wetter" in phrase for phrase in saved_phrases
+    ), f"Expected 'Wetter' (possibly with article) to be saved, got: {saved_phrases}"
 
 
 def test_phrase_saving_outputs_confirmation(agent: GermanLearningAgent):
@@ -66,7 +68,9 @@ def test_phrase_saving_continues_with_translation(agent: GermanLearningAgent):
     translation_message = message_outputs[1].message
     assert len(translation_message) > 10, "Translation message should contain content"
     # Check it's actually a translation (contains German text and/or English explanation)
-    assert "tisch" in translation_message.lower() or "table" in translation_message.lower(), "Should contain translation content"
+    assert (
+        "tisch" in translation_message.lower() or "table" in translation_message.lower()
+    ), "Should contain translation content"
 
 
 def test_phrase_not_duplicate(agent: GermanLearningAgent, test_db: PhrasesDB):

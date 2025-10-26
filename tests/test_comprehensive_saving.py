@@ -65,8 +65,8 @@ def test_translation_request_saving(
 # Removed test_comprehensive_saving_summary - redundant with parameterized tests and too slow
 
 
-def test_save_phrase_tool_called(agent: GermanLearningAgent):
-    """Test that save_phrase tool is actually called for translation requests."""
+def test_save_phrases_tool_called(agent: GermanLearningAgent):
+    """Test that save_phrases tool is actually called for translation requests."""
     # Arrange
     test_message = "How to say table?"
 
@@ -75,16 +75,16 @@ def test_save_phrase_tool_called(agent: GermanLearningAgent):
 
     # Assert - check log outputs for tool call
     log_outputs = [o for o in outputs if isinstance(o, LogOutput)]
-    tool_call_logs = [log.message for log in log_outputs if "Tool call: save_phrase" in log.message]
+    tool_call_logs = [log.message for log in log_outputs if "Tool call: save_phrases" in log.message]
 
     assert len(tool_call_logs) > 0, (
-        f"Expected save_phrase tool to be called for '{test_message}', "
+        f"Expected save_phrases tool to be called for '{test_message}', "
         f"but no tool call was logged. Logs: {[l.message for l in log_outputs]}"
     )
 
 
 def test_function_call_in_response_types(agent: GermanLearningAgent):
-    """Test that save_phrase is called for translation requests."""
+    """Test that save_phrases is called for translation requests."""
     # Arrange
     test_message = "How to say window?"
 

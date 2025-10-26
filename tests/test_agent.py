@@ -18,13 +18,13 @@ def test_simple_translation(agent: GermanLearningAgent):
     assert "hallo" in response_text
 
 
-def test_save_phrase_with_agent(agent: GermanLearningAgent):
+def test_save_phrases_with_agent(agent: GermanLearningAgent):
     """Test that phrases are saved when requested."""
     initial_count = len(agent.db.get_all_phrases())
 
     outputs = list(agent.process_message("Please save the phrase 'Guten Morgen' for me to practice"))
 
-    # save_phrase should be called
+    # save_phrases should be called
     assert len(outputs) >= 0
 
     phrases = agent.db.get_all_phrases()
@@ -65,7 +65,9 @@ def test_get_phrases_when_database_populated(agent: GermanLearningAgent):
     all_phrases = agent.db.get_all_phrases()
     assert len(all_phrases) == 3
     phrase_texts = [p["german"].lower() for p in all_phrases]
-    assert any(phrase in response_text for phrase in phrase_texts), f"No saved phrases found in response: {response_text}"
+    assert any(
+        phrase in response_text for phrase in phrase_texts
+    ), f"No saved phrases found in response: {response_text}"
 
 
 def test_conversation_continuation(agent: GermanLearningAgent):
