@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Literal
 
 
 @dataclass
@@ -98,3 +98,40 @@ class PhrasesDB:
         if limit is not None:
             return due_phrases[:limit]
         return due_phrases
+
+    def get_vocabulary(
+        self, limit: int = 100, sort_by: Literal["alphabetical", "mastery", "id"] = "id", ascending: bool = True
+    ) -> list[dict[str, Any]]:
+        """Get vocabulary with custom sorting and limit.
+
+        Args:
+            limit: Maximum number of phrases to return (default: 100, max: 2000)
+            sort_by: Sort order - "alphabetical", "mastery", or "id" (default: "id")
+            ascending: Sort in ascending order if True, descending if False (default: True)
+
+        Returns:
+            List of phrase dictionaries
+        """
+        limit = min(limit, 2000)
+        phrases_list = list(self.phrases.values())
+
+        # Define sort key based on sort_by parameter
+        def alphabetical_key(p: Phrase) -> str:
+            return p.german.lower()
+
+        def mastery_key(p: Phrase) -> float:
+            return p.ease_factor * p.interval_days
+
+        def id_key(p: Phrase) -> int:
+            return int(p.id)
+
+        key_func: Callable[[Phrase], Any]
+        if sort_by == "alphabetical":
+            key_func = alphabetical_key
+        elif sort_by == "mastery":
+            key_func = mastery_key
+        else:
+            key_func = id_key
+
+        sorted_phrases = sorted(phrases_list, key=key_func, reverse=not ascending)
+        return [asdict(phrase) for phrase in sorted_phrases[:limit]]

@@ -305,7 +305,10 @@ class GermanLearningAgent:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "limit": {"type": "integer", "description": "Maximum number of phrases to return (default: 30, max: 100)"}
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of phrases to return (default: 30, max: 100)",
+                        }
                     },
                     "required": ["limit"],
                     "additionalProperties": False,
@@ -330,6 +333,32 @@ class GermanLearningAgent:
                     "additionalProperties": False,
                 },
             },
+            {
+                "type": "function",
+                "name": "get_vocabulary",
+                "description": "Get user's vocabulary with custom limit and sorting. Useful for creating sentences, estimating language level, or analyzing vocabulary knowledge.",
+                "strict": True,
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of phrases to return (default: 100, max: 2000)",
+                        },
+                        "sort_by": {
+                            "type": "string",
+                            "enum": ["alphabetical", "mastery", "id"],
+                            "description": "Sort order: 'alphabetical' (A-Z), 'mastery' (by mastery level), 'id' (by addition order)",
+                        },
+                        "ascending": {
+                            "type": "boolean",
+                            "description": "Sort in ascending order if true, descending if false (default: true)",
+                        },
+                    },
+                    "required": ["limit", "sort_by", "ascending"],
+                    "additionalProperties": False,
+                },
+            },
         ]
 
     def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> ToolCallResult:
@@ -346,7 +375,7 @@ class GermanLearningAgent:
             limit = min(arguments.get("limit", 30), 100)
             phrases = self.db.get_due_phrases(limit=limit)
             if phrases:
-                german_phrases = [p['german'] for p in phrases]
+                german_phrases = [p["german"] for p in phrases]
                 phrases_list = "\n".join([f"- {german}" for german in german_phrases])
                 result = f"Found {len(phrases)} phrase(s) due for review:\n{phrases_list}"
             else:
@@ -365,6 +394,19 @@ class GermanLearningAgent:
                     )
                 ],
             )
+
+        elif tool_name == "get_vocabulary":
+            limit = arguments.get("limit", 100)
+            sort_by = arguments.get("sort_by", "id")
+            ascending = arguments.get("ascending", True)
+            phrases = self.db.get_vocabulary(limit=limit, sort_by=sort_by, ascending=ascending)
+            if phrases:
+                german_phrases = [p["german"] for p in phrases]
+                phrases_list = "\n".join([f"- {german}" for german in german_phrases])
+                result = f"Found {len(phrases)} phrase(s) in vocabulary:\n{phrases_list}"
+            else:
+                result = "No phrases in vocabulary"
+            return ToolCallResult(result=result, terminal=False, user_outputs=[])
 
         return ToolCallResult(result="Unknown tool", terminal=True, user_outputs=[])
 
