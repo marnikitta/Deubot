@@ -15,6 +15,7 @@ class Phrase:
     german: str
     ease_factor: float = 2.5
     interval_days: int = 0
+    repetition: int = 0
     next_review: str | None = None
 
 
@@ -67,15 +68,17 @@ class PhrasesDB:
 
         if quality >= 3:
             phrase.ease_factor = max(1.3, phrase.ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)))
-            if phrase.interval_days == 0:
+            phrase.repetition += 1
+
+            if phrase.repetition == 1:
                 phrase.interval_days = 1
-            elif phrase.interval_days == 1:
+            elif phrase.repetition == 2:
                 phrase.interval_days = 6
             else:
                 phrase.interval_days = int(phrase.interval_days * phrase.ease_factor)
         else:
+            phrase.repetition = 0
             phrase.interval_days = 1
-            phrase.ease_factor = max(1.3, phrase.ease_factor - 0.2)
 
         next_review_date = datetime.now()
         from datetime import timedelta

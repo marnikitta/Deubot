@@ -121,7 +121,9 @@ class GermanLearningAgent:
                 german_phrases = [p["german"] for p in phrases]
                 phrases_list = "\n".join([f"- {german}" for german in german_phrases])
                 result = f"Found {len(phrases)} phrase(s) in vocabulary:\n{phrases_list}"
-                logger.info(f"Retrieved {len(phrases)} phrases from vocabulary (sort_by={sort_by}, ascending={ascending})")
+                logger.info(
+                    f"Retrieved {len(phrases)} phrases from vocabulary (sort_by={sort_by}, ascending={ascending})"
+                )
             else:
                 result = "No phrases in vocabulary"
                 logger.info("No phrases in vocabulary")

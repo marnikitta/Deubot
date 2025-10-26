@@ -161,9 +161,7 @@ class DeuBot:
         self.review_state = {}
 
         try:
-            text = (
-                f"<b>{german}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
-            )
+            text = f"<b>{german}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             await query.edit_message_text(
                 text,
                 parse_mode="HTML",
