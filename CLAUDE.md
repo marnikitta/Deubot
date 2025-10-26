@@ -91,3 +91,4 @@ The service is configured to:
 - Use type aliases for complex unions
 - Return typed objects instead of magic strings or status codes
 - Use boolean flags with clear names (e.g., terminal, enable_logs)
+- Keep tests robust. Dont use mocks in tests
