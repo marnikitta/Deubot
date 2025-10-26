@@ -53,8 +53,7 @@ def test_translation_request_saving(
 
     if should_save:
         assert phrases_added > 0, (
-            f"Expected phrase to be saved for '{test_message}' ({description}), "
-            f"but no phrase was saved. Response types: {response_types}"
+            f"Expected phrase to be saved for '{test_message}' ({description}), " f"but no phrase was saved."
         )
     else:
         assert phrases_added == 0, (

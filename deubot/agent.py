@@ -7,6 +7,7 @@ from typing import Any, Generator
 from openai import OpenAI
 
 from deubot.database import PhrasesDB
+from deubot.tools import get_tools
 
 logger = logging.getLogger(__name__)
 
@@ -56,84 +57,7 @@ class GermanLearningAgent:
         self.enable_logs = enable_logs
         self.system_prompt = _load_system_prompt()
         self.messages: list[dict[str, str]] = []
-        self.tools: list[dict[str, Any]] = [
-            {
-                "type": "function",
-                "name": "save_phrase",
-                "description": "Save a new German phrase to the learning database.",
-                "strict": True,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "german": {"type": "string", "description": "The German word or phrase to be saved."}
-                    },
-                    "required": ["german"],
-                    "additionalProperties": False,
-                },
-            },
-            {
-                "type": "function",
-                "name": "get_next_due_phrases",
-                "description": "Get the next batch of German phrases that need review, returning phrase IDs and German text for each phrase (default: 30, max: 100).",
-                "strict": True,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "limit": {
-                            "type": "integer",
-                            "description": "Maximum number of phrases to return (default: 30, max: 100)",
-                        }
-                    },
-                    "required": ["limit"],
-                    "additionalProperties": False,
-                },
-            },
-            {
-                "type": "function",
-                "name": "show_review",
-                "description": "Display a review card to the user with the German phrase, reveal button, and rating buttons, including an English explanation with translation, context, examples, and grammar notes.",
-                "strict": True,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "phrase_id": {"type": "string", "description": "The ID of the phrase being reviewed"},
-                        "german": {"type": "string", "description": "The German phrase to show"},
-                        "explanation": {
-                            "type": "string",
-                            "description": "Full English explanation with translation, context, usage examples, and grammar notes",
-                        },
-                    },
-                    "required": ["phrase_id", "german", "explanation"],
-                    "additionalProperties": False,
-                },
-            },
-            {
-                "type": "function",
-                "name": "get_vocabulary",
-                "description": "Get user's vocabulary with custom limit and sorting. Use this immediately when user asks: 'estimate my language level', 'what's my vocabulary like?', 'show my vocab', 'create a sentence with my words', or any request to analyze/view their vocabulary.",
-                "strict": True,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "limit": {
-                            "type": "integer",
-                            "description": "Maximum number of phrases to return (default: 100, max: 2000)",
-                        },
-                        "sort_by": {
-                            "type": "string",
-                            "enum": ["alphabetical", "mastery", "id"],
-                            "description": "Sort order: 'alphabetical' (A-Z), 'mastery' (by mastery level), 'id' (by addition order)",
-                        },
-                        "ascending": {
-                            "type": "boolean",
-                            "description": "Sort in ascending order if true, descending if false (default: true)",
-                        },
-                    },
-                    "required": ["limit", "sort_by", "ascending"],
-                    "additionalProperties": False,
-                },
-            },
-        ]
+        self.tools = get_tools()
 
     def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> ToolCallResult:
         if tool_name == "save_phrase":

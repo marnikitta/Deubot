@@ -44,6 +44,7 @@ The default deployment host is `deubot`, configured in the Makefile. Change `hos
 
 - **main.py**: Application entry point with `main()` function
 - **agent.py**: AI agent with OpenAI integration, tool calling, and typed output system
+- **tools.py**: Tool definitions with elaborate descriptions, usage patterns, and examples following Claude Code's documentation philosophy
 - **bot.py**: Telegram bot handler with message routing and user interaction
 - **database.py**: JSON-based phrase storage with spaced repetition (SM-2 algorithm)
 - **dotenv.py**: Custom .env file parser that loads environment variables from a `.env` file, supporting quoted and unquoted values
