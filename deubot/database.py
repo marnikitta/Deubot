@@ -1,3 +1,4 @@
+import gzip
 import json
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -22,17 +23,25 @@ class PhrasesDB:
 
     def _load(self) -> None:
         if self.db_path and self.db_path.exists():
-            with open(self.db_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                self.phrases = {phrase_id: Phrase(**phrase_data) for phrase_id, phrase_data in data.items()}
+            with gzip.open(self.db_path, "rt", encoding="utf-8") as f:
+                for line in f:
+                    phrase_data = json.loads(line.strip())
+                    # Convert _id to id for dataclass
+                    if "_id" in phrase_data:
+                        phrase_data["id"] = phrase_data.pop("_id")
+                    phrase = Phrase(**phrase_data)
+                    self.phrases[phrase.id] = phrase
 
     def _save(self) -> None:
         if not self.db_path:
             return
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.db_path, "w", encoding="utf-8") as f:
-            data = {phrase_id: asdict(phrase) for phrase_id, phrase in self.phrases.items()}
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        with gzip.open(self.db_path, "wt", encoding="utf-8") as f:
+            for phrase in self.phrases.values():
+                phrase_dict = asdict(phrase)
+                # Convert id to _id for JSON
+                phrase_dict["_id"] = phrase_dict.pop("id")
+                f.write(json.dumps(phrase_dict, ensure_ascii=False) + "\n")
 
     def add_phrase(self, german: str) -> str:
         phrase_id = f"{len(self.phrases) + 1}"

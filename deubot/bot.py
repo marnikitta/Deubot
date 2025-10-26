@@ -1,5 +1,4 @@
 import logging
-import re
 from datetime import datetime, timedelta
 from typing import Iterable
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -8,25 +7,6 @@ from telegram.error import BadRequest
 from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput, TypingOutput, UserOutput
 
 logger = logging.getLogger(__name__)
-
-
-def escape_markdown_v2(text: str) -> str:
-    """
-    Escape special characters for MarkdownV2 while preserving formatting.
-
-    MarkdownV2 requires escaping: _ * [ ] ( ) ~ ` > # + - = | { } . !
-    But we want to preserve: *bold*, _italic_, `code`, [links](url)
-    """
-    # Characters that need escaping in MarkdownV2
-    escape_chars = r"_*[]()~`>#+-=|{}.!"
-
-    # For now, do a simple escape of all special characters
-    # We'll handle preserving Markdown formatting in a future iteration if needed
-    def escape_char(match):
-        char = match.group(0)
-        return "\\" + char
-
-    return re.sub(f"([{re.escape(escape_chars)}])", escape_char, text)
 
 
 class AuthFilter(filters.MessageFilter):
@@ -69,15 +49,15 @@ class DeuBot:
 
         self._clear_history()
         await update.message.reply_text(
-            "Hallo\\! Ich bin dein Deutschlernassistent\\.\n"
-            "_Hello\\! I'm your German learning assistant\\._\n\n"
-            "Schicke mir deutschen oder englischen Text und ich übersetze ihn für dich\\.\n"
-            "_Send me German or English text and I'll translate it for you\\._\n\n"
-            "Befehle / _Commands:_\n"
-            "/clear \\- Verlauf löschen / _Clear history_\n"
-            "/stats \\- Statistiken / _Show statistics_\n"
-            "/review \\- Wiederholung starten / _Start review session_",
-            parse_mode="MarkdownV2",
+            "Hallo! Ich bin dein Deutschlernassistent.\n"
+            "<i>Hello! I'm your German learning assistant.</i>\n\n"
+            "Schicke mir deutschen oder englischen Text und ich übersetze ihn für dich.\n"
+            "<i>Send me German or English text and I'll translate it for you.</i>\n\n"
+            "Befehle / <i>Commands:</i>\n"
+            "/clear - Verlauf löschen / <i>Clear history</i>\n"
+            "/stats - Statistiken / <i>Show statistics</i>\n"
+            "/review - Wiederholung starten / <i>Start review session</i>",
+            parse_mode="HTML",
         )
 
     async def clear_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -85,9 +65,7 @@ class DeuBot:
             return
 
         self._clear_history()
-        await update.message.reply_text(
-            "Verlauf gelöscht\\!\n_Conversation history cleared\\!_", parse_mode="MarkdownV2"
-        )
+        await update.message.reply_text("Verlauf gelöscht!\n<i>Conversation history cleared!</i>", parse_mode="HTML")
 
     async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.message:
@@ -96,11 +74,11 @@ class DeuBot:
         phrases = self.agent.db.get_all_phrases()
         due_phrases = self.agent.db.get_due_phrases()
 
-        stats_text = "Lernstatistiken\n_Learning Statistics_\n\n"
-        stats_text += f"Gesamt: {len(phrases)} Phrasen\n_Total: {len(phrases)} phrases_\n"
-        stats_text += f"Fällig: {len(due_phrases)} Phrasen\n_Due for review: {len(due_phrases)} phrases_"
+        stats_text = "Lernstatistiken\n<i>Learning Statistics</i>\n\n"
+        stats_text += f"Gesamt: {len(phrases)} Phrasen\n<i>Total: {len(phrases)} phrases</i>\n"
+        stats_text += f"Fällig: {len(due_phrases)} Phrasen\n<i>Due for review: {len(due_phrases)} phrases</i>"
 
-        await update.message.reply_text(stats_text, parse_mode="MarkdownV2")
+        await update.message.reply_text(stats_text, parse_mode="HTML")
 
     async def review_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.message:
@@ -119,7 +97,7 @@ class DeuBot:
                 await message.chat.send_action(action="typing")
             elif isinstance(output, MessageOutput):
                 if output.message:
-                    await message.reply_text(output.message)
+                    await message.reply_text(output.message, parse_mode="HTML")
             elif isinstance(output, ShowReviewOutput):
                 await self._show_review_card(message, output)
             elif isinstance(output, LogOutput):
@@ -132,9 +110,8 @@ class DeuBot:
         keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{review.phrase_id}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        escaped_german = escape_markdown_v2(review.german)
-        text = f"*{escaped_german}*\n\n_What does this mean?_"
-        await message.reply_text(text, reply_markup=reply_markup, parse_mode="MarkdownV2")
+        text = f"<b>{review.german}</b>\n\n<i>What does this mean?</i>"
+        await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         query = update.callback_query
@@ -177,11 +154,9 @@ class DeuBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        escaped_german = escape_markdown_v2(german)
-        escaped_explanation = escape_markdown_v2(explanation)
-        text = f"*{escaped_german}*\n\n{escaped_explanation}\n\n_How well did you remember?_"
+        text = f"<b>{german}</b>\n\n{explanation}\n\n<i>How well did you remember?</i>"
         try:
-            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="MarkdownV2")
+            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
         except BadRequest as e:
             if "message is not modified" not in str(e).lower():
                 raise
@@ -192,6 +167,7 @@ class DeuBot:
             return
 
         german = self.review_state["german"]
+        explanation = self.review_state["explanation"]
         quality_names = {1: "Again", 2: "Hard", 3: "Good", 4: "Easy"}
         quality_name = quality_names.get(quality, "")
 
@@ -199,10 +175,12 @@ class DeuBot:
         self.review_state = {}
 
         try:
-            # The query.message.text is already escaped from when we created the reveal message
+            text = (
+                f"<b>{german}</b>\n\n{explanation}\n\n<i>How well did you remember?</i>\n\n✓ Rated as: {quality_name}"
+            )
             await query.edit_message_text(
-                f"{query.message.text}\n\n✓ Rated as: {quality_name}",
-                parse_mode="MarkdownV2",
+                text,
+                parse_mode="HTML",
             )
         except BadRequest as e:
             if "message is not modified" not in str(e).lower():

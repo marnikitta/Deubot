@@ -19,7 +19,7 @@ def main():
     allowed_user_id_str = os.getenv("ALLOWED_USER_ID")
     openai_api_key = os.getenv("OPENAI_API_KEY")
     openai_model = os.getenv("OPENAI_MODEL", "gpt-4o")
-    db_path = os.getenv("PHRASES_DB_PATH", "./data/phrases.json")
+    db_path = os.getenv("PHRASES_DB_PATH", "./data/phrases.json.gz")
     enable_logs = os.getenv("ENABLE_LOGS", "true").lower() in ("true", "1", "yes")
 
     if not telegram_token:
