@@ -48,7 +48,7 @@ class DeuBot:
 
         self._clear_history()
         await update.message.reply_text(
-            "Hallo! Ich bin dein Deutschlernassistent\\.\n"
+            "Hallo\\! Ich bin dein Deutschlernassistent\\.\n"
             "_Hello\\! I'm your German learning assistant\\._\n\n"
             "Schicke mir deutschen oder englischen Text und ich übersetze ihn für dich\\.\n"
             "_Send me German or English text and I'll translate it for you\\._\n\n"

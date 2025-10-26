@@ -1,28 +1,27 @@
-from typing import Any, Literal
-from dataclasses import dataclass
-from openai import OpenAI
-from deubot.database import PhrasesDB
 import json
+from dataclasses import dataclass
+from typing import Any
+
+from openai import OpenAI
+
+from deubot.database import PhrasesDB
 
 
 @dataclass
 class MessageOutput:
-    type: Literal["message"] = "message"
-    message: str = ""
+    message: str
 
 
 @dataclass
 class ShowReviewOutput:
-    type: Literal["show_review"] = "show_review"
-    phrase_id: str = ""
-    german: str = ""
-    explanation: str = ""
+    phrase_id: str
+    german: str
+    explanation: str
 
 
 @dataclass
 class LogOutput:
-    type: Literal["log"] = "log"
-    message: str = ""
+    message: str
 
 
 SYSTEM_PROMPT = """
@@ -121,7 +120,7 @@ English translation: Good evening. Usage: Used as a greeting in the evening. Con
 ```
 ❌ **Problems:** No formatting, rambling, filled with questions and self-corrections, hard to read
 
-3. **Important notes:**
+**Important notes:**
    - You can call show_review() only ONCE per turn - if you try to call it multiple times, only the first will be shown
    - User can interrupt at any time by sending a different message - if they ask a question or change topic, stop reviewing and respond normally
 
@@ -142,12 +141,12 @@ Assistant: [calls get_next_due_phrases(limit=10)]
 
 **Completing review session**
 ```
-User: "REVIEWED: Das ist gut as Good"
-Assistant: [calls get_next_due_phrase(limit=10) - returns "No phrases due for review"]
+User: "Reviewed Das ist gut as Good"
+Assistant: [calls get_next_due_phrases(limit=10) - returns "No phrases due for review"]
 Assistant: "Ausgezeichnet! All reviews completed for today.\n_Excellent! All reviews completed for today._"
 ```
 
-**Example 6: User interrupting review (CORRECT)**
+**User interrupting review (CORRECT)**
 ```
 User: "I want to start a review session"
 Assistant: [calls get_next_due_phrases(limit=10)]
@@ -195,7 +194,6 @@ User: "Hello"
 Assistant: "Hallo! Wie kann ich dir helfen?\n_Hello! How can I help you?_"
 ```
 
-
 ## Tone and Formatting
 - Be friendly, encouraging, and educational
 - Explain grammar points clearly when relevant - use definitive statements, not questions or self-corrections
@@ -217,52 +215,81 @@ class GermanLearningAgent:
             {
                 "type": "function",
                 "name": "save_phrase",
-                "description": "Save a new German phrase to the learning database. Use this when the user wants to remember a German word or phrase.",
+                "description": "Save a new German phrase to the learning database.",
+                "strict": True,
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "german": {"type": "string", "description": "The German word or phrase"},
+                        "german": {
+                            "type": "string",
+                            "description": "The German word or phrase to be saved."
+                        }
                     },
-                    "required": ["german"],
-                },
+                    "required": [
+                        "german"
+                    ],
+                    "additionalProperties": False
+                }
             },
             {
                 "type": "function",
-                "name": "get_next_due_phrases",
-                "description": "Get the next batch of German phrases that need review. Returns a list of up to 10 phrases with their IDs and German text. Returns empty list if no phrases are due. Use this to get phrases for the review session.",
+                "name": "get_next_due_phrase",
+                "description": "Get the next batch of German phrases that need review, returning a list of up to 10 phrases with their IDs and German text.",
+                "strict": True,
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of phrases to return (default: 10)",
-                            "default": 10,
+                            "description": "Maximum number of phrases to return (default: 10)"
                         }
                     },
-                },
+                    "required": [
+                        "limit"
+                    ],
+                    "additionalProperties": False
+                }
             },
             {
                 "type": "function",
                 "name": "show_review",
-                "description": "Display a review card to the user with the German phrase, reveal button, and rating buttons. This is a terminal tool - call it ONLY ONCE and wait for user input. After the user rates the phrase, they will send a message like 'Reviewed: [phrase] - [rating]'. The explanation should be in English with translation, context, usage examples, and grammar notes.",
+                "description": "Display a review card to the user with the German phrase, reveal button, and rating buttons, including an English explanation with translation, context, examples, and grammar notes.",
+                "strict": True,
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "phrase_id": {"type": "string", "description": "The ID of the phrase being reviewed"},
-                        "german": {"type": "string", "description": "The German phrase to show"},
+                        "phrase_id": {
+                            "type": "string",
+                            "description": "The ID of the phrase being reviewed"
+                        },
+                        "german": {
+                            "type": "string",
+                            "description": "The German phrase to show"
+                        },
                         "explanation": {
                             "type": "string",
-                            "description": "Full English explanation with translation, context, examples, and grammar notes",
-                        },
+                            "description": "Full English explanation with translation, context, usage examples, and grammar notes"
+                        }
                     },
-                    "required": ["phrase_id", "german", "explanation"],
-                },
+                    "required": [
+                        "phrase_id",
+                        "german",
+                        "explanation"
+                    ],
+                    "additionalProperties": False
+                }
             },
             {
                 "type": "function",
                 "name": "clear_history",
-                "description": "Clear the conversation history for this user. Use this when the user explicitly asks to clear/reset the conversation, or when you detect a completely new conversation topic that doesn't relate to previous context.",
-                "parameters": {"type": "object", "properties": {}},
+                "description": "Clear the conversation history for this user",
+                "strict": True,
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": False
+                }
             },
         ]
 
@@ -284,7 +311,7 @@ class GermanLearningAgent:
 
         elif tool_name == "clear_history":
             self.messages = []
-            return "CLEAR_HISTORY"
+            return "True"
 
         return "Unknown tool"
 
@@ -328,7 +355,6 @@ class GermanLearningAgent:
 
         max_iterations = 10
         iterations = 0
-        was_cleared = False
         review_shown_in_turn = False
 
         while response.status == "completed" and iterations < max_iterations:
@@ -343,17 +369,17 @@ class GermanLearningAgent:
                     tool_args = json.loads(output_item.arguments)
 
                     if self.enable_logs:
-                        args_str = ", ".join([f"{k}={v}" for k, v in tool_args.items()])
+                        args_str = ", ".join([f"{k}={v[:10]}" for k, v in tool_args.items()])
                         outputs.append(LogOutput(message=f"Tool call: {tool_name}({args_str})"))
 
-                    result = self._execute_tool(tool_name, tool_args)
+                    tool_call_result = self._execute_tool(tool_name, tool_args)
 
-                    if result == "CLEAR_HISTORY":
+                    if tool_call_result == "CLEAR_HISTORY":
                         was_cleared = True
                         if self.enable_logs:
                             outputs.append(LogOutput(message="History cleared"))
-                    elif result.startswith("SHOW_REVIEW:"):
-                        parts = result.split(":", 3)
+                    elif tool_call_result.startswith("SHOW_REVIEW:"):
+                        parts = tool_call_result.split(":", 3)
                         if len(parts) == 4:
                             if not review_shown_in_turn:
                                 outputs.append(
@@ -364,18 +390,18 @@ class GermanLearningAgent:
                                     )
                                 )
                                 review_shown_in_turn = True
-                                result = "Review shown to user. Waiting for user rating."
+                                tool_call_result = "Review shown to user. Waiting for user rating."
                                 if self.enable_logs:
                                     outputs.append(LogOutput(message=f"Showing review for phrase ID: {parts[1]}"))
                             else:
-                                result = "Review NOT shown - only one review can be displayed per turn. This review was skipped."
+                                tool_call_result = "Review NOT shown - only one review can be displayed per turn. This review was skipped."
                                 if self.enable_logs:
                                     outputs.append(
                                         LogOutput(message="Additional review call skipped (only 1 per turn)")
                                     )
 
                     input_list.append(
-                        {"type": "function_call_output", "call_id": output_item.call_id, "output": result}
+                        {"type": "function_call_output", "call_id": output_item.call_id, "output": tool_call_result}
                     )
 
                     # Only continue calling LLM for non-terminal tools
