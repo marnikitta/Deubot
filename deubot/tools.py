@@ -25,28 +25,31 @@ def get_tools() -> list[dict[str, Any]]:
             "name": "save_phrase",
             "description": """Save a new German phrase to the learning database for spaced repetition review.
 
+CRITICAL: MUST call this BEFORE providing any response that translates or explains a German phrase.
+
 Usage Pattern:
-- Call this immediately after providing a translation or explaining a German word/phrase
-- Save the German text exactly as you explained it to the user
-- Do NOT call this for grammar questions, general explanations, or questions about language concepts
-- Do NOT call this when user explicitly asks not to save
+1. Detect if a concrete German phrase will be produced or interpreted
+2. Call save_phrase with the German text
+3. Then provide your response per language policy
+
+DO NOT call for grammar questions, general explanations, or language concepts.
+DO NOT call when user explicitly asks not to save.
 
 When to Use:
-✓ User asks "How do you say umbrella?" → After translating, save "Regenschirm"
-✓ User asks "What does Krankenhaus mean?" → After explaining, save "Krankenhaus"
-✓ User provides German text "Guten Abend" → After translating, save "Guten Abend"
-✓ User asks "Translate 'the book' to German" → After translating, save "das Buch"
+- User asks "How do you say umbrella?" → MUST save "Regenschirm" BEFORE responding
+- User asks "What does Krankenhaus mean?" → MUST save "Krankenhaus" BEFORE explaining
+- User provides German text "Guten Abend" → MUST save "Guten Abend" BEFORE translating
+- User asks "Translate 'the book' to German" → MUST save "das Buch" BEFORE responding
 
 When NOT to Use:
-✗ User asks "What is the dative case?" → Grammar concept, don't save
-✗ User asks "What's the difference between der/die/das?" → Grammar explanation, don't save
-✗ User asks about conjugation rules → General concept, don't save
-✗ User says "just explain, don't save" → Respect user preference
+- User asks "What is the dative case?" → Grammar concept only
+- User asks "What's the difference between der/die/das?" → Grammar explanation only
+- User asks about conjugation rules → General concept only
+- User says "just explain, don't save" → Respect user preference
 
 Important Notes:
-- Save phrases in their natural form (with articles for nouns: "der Tisch", not "Tisch")
-- Include context when relevant (e.g., "Guten Morgen" instead of just "Morgen")
-- After saving, the user receives a confirmation message "✓ Saved: <phrase>"
+- Save phrases in their natural form with articles for nouns: "der Tisch" not "Tisch"
+- Include context when relevant: "Guten Morgen" not just "Morgen"
 """,
             "strict": True,
             "parameters": {
@@ -66,41 +69,28 @@ Important Notes:
             "name": "get_next_due_phrases",
             "description": """Retrieve the next batch of German phrases that need spaced repetition review.
 
+CRITICAL BATCHING RULE: Call ONLY when starting a review session OR when current batch is exhausted.
+DO NOT call again until all cards from current batch have been shown via show_review.
+
 Usage Pattern:
-- Call this at the START of a review session when user asks to review/practice
-- Fetch batches of 30 phrases at a time (default)
-- Cache the results in memory - do NOT call again until the entire batch is shown
+- Fetch batches of 30 phrases (default) and cache in memory
 - Each phrase includes: ID (for tracking), German text (to display)
+- Return format: "- ID: {id}, German: {german}"
 
 When to Use:
-✓ User says "/review" or "start review" → Call immediately with limit=30
-✓ User asks "let's practice" or "time to review" → Call immediately
-✓ Current batch is exhausted → Fetch next batch with limit=30
-✓ User asks "how many phrases need review?" → Call with appropriate limit to check
+- User starts review: "/review", "let's practice", "time to review"
+- Current batch exhausted: all cached cards shown, need more
+- Checking due count: user asks "how many phrases need review?"
 
 When NOT to Use:
-✗ In the MIDDLE of showing review cards from current batch → Use cached batch instead
-✗ After showing just 1-2 cards from a batch of 30 → Continue with remaining cached cards
-✗ User asks to see vocabulary → Use get_vocabulary instead
-✗ User asks about specific phrase stats → Use get_vocabulary with appropriate sort
+- Mid-batch: showing cards 1-29 of a 30-card batch
+- User asks to see vocabulary → use get_vocabulary instead
+- User asks about phrase stats → use get_vocabulary with sort
 
-Flow Example:
-1. User: "/review"
-2. Call get_next_due_phrases(limit=30) → Returns 30 phrases
-3. Show card 1 via show_review
-4. User rates card 1
-5. Show card 2 via show_review ← DO NOT call get_next_due_phrases again!
-6. Continue through all 30 cards
-7. After card 30, call get_next_due_phrases(limit=30) again
-
-Return Format:
-Returns a list of phrases with structure: "- ID: {id}, German: {german}"
-Example: "- ID: 42, German: Guten Morgen"
-
-Performance Notes:
-- Default limit of 30 is optimal for a review session
-- Maximum limit is 100 (enforced)
-- If no phrases are due, returns earliest scheduled phrases
+Technical Notes:
+- Default limit: 30 (optimal for one session)
+- Maximum limit: 100 (enforced)
+- Returns earliest scheduled phrases if none currently due
 """,
             "strict": True,
             "parameters": {
@@ -120,66 +110,39 @@ Performance Notes:
             "name": "show_review",
             "description": """Display an interactive review card to the user with a German phrase for spaced repetition testing.
 
-CRITICAL: This is a TERMINAL tool - after calling it, you MUST wait for user input. Do not continue conversation.
+CRITICAL: After calling this tool, STOP and WAIT for user's rating. DO NOT send text or call other tools.
 
-Card Interaction Flow:
-1. Card shows German phrase with a "Reveal" button
-2. User clicks "Reveal" to see explanation
-3. User rates their recall: Again (1), Hard (2), Good (3), Easy (4)
-4. You receive the rating as a message: "REVIEWED: {phrase} as {rating}"
-5. THEN you show the next card from your cached batch
-
-Usage Pattern:
-- Call this once per review turn
-- Only show ONE card at a time
-- Prepare a comprehensive explanation before calling
-- Wait for user rating before showing next card
+Usage:
+- Call ONCE per turn with ONE card
+- Prepare comprehensive explanation before calling
+- User rates card and you receive: "REVIEWED: {phrase} as {rating}"
+- In next turn, show next card from cached batch
 
 When to Use:
-✓ User started a review session and you have phrases from get_next_due_phrases
-✓ User just rated a card and you have more cards in your cached batch
-✓ You've prepared a detailed explanation for the phrase
+- During active review session with phrases from get_next_due_phrases
+- After user rated previous card and more cards remain in cached batch
+- You have prepared detailed explanation for the phrase
 
 When NOT to Use:
-✗ User hasn't started a review session
-✗ You already showed a card this turn (limit: 1 per turn)
-✗ User is asking questions or having a conversation
-✗ You don't have the phrase_id from get_next_due_phrases
+- User hasn't started review session
+- Already showed card this turn (LIMIT: 1 per turn)
+- User asking questions or conversing
+- Missing phrase_id from get_next_due_phrases
 
-Explanation Format:
-Create a comprehensive explanation including:
+Explanation Format (use this structure):
+<b>[English translation]</b>
 
-**Translation**: Clear English translation
-**Context**: When/how it's used
-**Examples**: 2-3 usage examples with translations
-**Grammar**: Relevant grammatical notes
-**Similar phrases**: Related expressions (if relevant)
+One-two sentences of clear context and usage.
 
-Example Explanation Template:
-<b>Good morning</b>
+<b>Usage:</b>
+- Bullet points for where/when to use
 
-A common morning greeting used until roughly 11 AM.
+<b>Examples:</b>
+1. [German] – [English]
+2. [German] – [English]
 
-Examples:
-• Guten Morgen, wie geht's? - Good morning, how are you?
-• Guten Morgen, Herr Schmidt - Good morning, Mr. Schmidt
-
-Grammar: "Guten" is the accusative form of "gut", used in this fixed expression.
-
-Similar: Guten Tag (Good day), Guten Abend (Good evening)
-
-Parameters:
-- phrase_id: The ID from get_next_due_phrases (e.g., "42")
-- german: The German phrase exactly as stored (e.g., "Guten Morgen")
-- explanation: Rich HTML-formatted explanation with <b>, <i> tags
-
-Terminal Behavior:
-After calling show_review, you CANNOT:
-- Show another review card in the same turn
-- Continue with conversational response
-- Call other tools
-
-The review card is displayed, user interacts with it, and sends you their rating as the next message.
+<b>Grammar note:</b>
+One short, definitive point if relevant.
 """,
             "strict": True,
             "parameters": {
@@ -214,18 +177,18 @@ Usage Pattern:
 - Choose appropriate sort_by based on user's goal
 - Adjust limit based on task (small for sentences, large for analysis)
 
-When to Use (Call Immediately):
-✓ "Estimate my language level" → get_vocabulary(limit=2000, sort_by="mastery", ascending=False)
-✓ "What's my vocabulary like?" → get_vocabulary(limit=100, sort_by="mastery", ascending=False)
-✓ "Show me my saved phrases" → get_vocabulary(limit=100, sort_by="id", ascending=True)
-✓ "Create a sentence with my words" → get_vocabulary(limit=50, sort_by="mastery", ascending=False)
-✓ "What are my newest words?" → get_vocabulary(limit=20, sort_by="id", ascending=False)
-✓ "Which phrases do I know best?" → get_vocabulary(limit=30, sort_by="mastery", ascending=False)
-✓ "List phrases alphabetically" → get_vocabulary(limit=100, sort_by="alphabetical", ascending=True)
+When to Use:
+- "Estimate my language level" → limit=2000, sort_by="mastery", ascending=False
+- "What's my vocabulary like?" → limit=100, sort_by="mastery", ascending=False
+- "Show me my saved phrases" → limit=100, sort_by="id", ascending=True
+- "Create a sentence with my words" → limit=50, sort_by="mastery", ascending=False
+- "What are my newest words?" → limit=20, sort_by="id", ascending=False
+- "Which phrases do I know best?" → limit=30, sort_by="mastery", ascending=False
+- "List phrases alphabetically" → limit=100, sort_by="alphabetical", ascending=True
 
 When NOT to Use:
-✗ User wants to start a review → Use get_next_due_phrases instead
-✗ User asks about phrases due NOW → Use get_next_due_phrases instead
+- User wants to start a review → use get_next_due_phrases instead
+- User asks about phrases due NOW → use get_next_due_phrases instead
 
 Sorting Strategies:
 
@@ -259,19 +222,7 @@ Returns list of phrases with German text only:
 "- Krankenhaus"
 
 Analysis Approach:
-After retrieving vocabulary:
-1. Count total phrases
-2. Look at variety and complexity
-3. Identify CEFR level indicators (A1: Hallo, Danke; A2: einkaufen, gestern; B1: obwohl, trotzdem; etc.)
-4. Assess grammar coverage (cases, tenses, conjunctions)
-5. Provide level estimate with specific evidence
-
-Example Analysis Flow:
-User: "Estimate my language level"
-1. Call get_vocabulary(limit=2000, sort_by="mastery", ascending=False)
-2. Analyze the 2000 phrases returned
-3. Identify level markers: "I see 234 phrases including A1 basics (Hallo, Danke), A2 vocabulary (einkaufen, gestern), and some B1 phrases (obwohl, trotzdem)"
-4. Estimate: "Based on your 234 phrases with solid A2 coverage and emerging B1, you're around A2-B1 level"
+Count phrases, assess variety/complexity, identify CEFR level indicators (A1: Hallo, Danke; A2: einkaufen, gestern; B1: obwohl, trotzdem), assess grammar coverage, provide level estimate with evidence.
 """,
             "strict": True,
             "parameters": {
