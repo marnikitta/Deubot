@@ -24,6 +24,16 @@ class LogOutput:
     message: str
 
 
+UserOutput = MessageOutput | ShowReviewOutput | LogOutput
+
+
+@dataclass
+class ToolCallResult:
+    result: str
+    terminal: bool
+    user_outputs: list[UserOutput]
+
+
 SYSTEM_PROMPT = """
 You are a German language learning assistant. Your primary role is to help users learn German through translation and spaced repetition.
 
@@ -220,16 +230,11 @@ class GermanLearningAgent:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "german": {
-                            "type": "string",
-                            "description": "The German word or phrase to be saved."
-                        }
+                        "german": {"type": "string", "description": "The German word or phrase to be saved."}
                     },
-                    "required": [
-                        "german"
-                    ],
-                    "additionalProperties": False
-                }
+                    "required": ["german"],
+                    "additionalProperties": False,
+                },
             },
             {
                 "type": "function",
@@ -239,16 +244,11 @@ class GermanLearningAgent:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "limit": {
-                            "type": "integer",
-                            "description": "Maximum number of phrases to return (default: 10)"
-                        }
+                        "limit": {"type": "integer", "description": "Maximum number of phrases to return (default: 10)"}
                     },
-                    "required": [
-                        "limit"
-                    ],
-                    "additionalProperties": False
-                }
+                    "required": ["limit"],
+                    "additionalProperties": False,
+                },
             },
             {
                 "type": "function",
@@ -258,66 +258,61 @@ class GermanLearningAgent:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "phrase_id": {
-                            "type": "string",
-                            "description": "The ID of the phrase being reviewed"
-                        },
-                        "german": {
-                            "type": "string",
-                            "description": "The German phrase to show"
-                        },
+                        "phrase_id": {"type": "string", "description": "The ID of the phrase being reviewed"},
+                        "german": {"type": "string", "description": "The German phrase to show"},
                         "explanation": {
                             "type": "string",
-                            "description": "Full English explanation with translation, context, usage examples, and grammar notes"
-                        }
+                            "description": "Full English explanation with translation, context, usage examples, and grammar notes",
+                        },
                     },
-                    "required": [
-                        "phrase_id",
-                        "german",
-                        "explanation"
-                    ],
-                    "additionalProperties": False
-                }
+                    "required": ["phrase_id", "german", "explanation"],
+                    "additionalProperties": False,
+                },
             },
             {
                 "type": "function",
                 "name": "clear_history",
                 "description": "Clear the conversation history for this user",
                 "strict": True,
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": False
-                }
+                "parameters": {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
             },
         ]
 
-    def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> str:
+    def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> ToolCallResult:
         if tool_name == "save_phrase":
             phrase_id = self.db.add_phrase(german=arguments["german"])
-            return f"Phrase saved successfully with ID: {phrase_id}"
+            return ToolCallResult(
+                result=f"Phrase saved successfully with ID: {phrase_id}", terminal=True, user_outputs=[]
+            )
 
         elif tool_name == "get_next_due_phrases":
             limit = arguments.get("limit", 10)
             phrases = self.db.get_due_phrases(limit=limit)
             if phrases:
                 phrases_list = "\n".join([f"- ID={p['id']}, German={p['german']}" for p in phrases])
-                return f"Found {len(phrases)} phrase(s) due for review:\n{phrases_list}"
-            return "No phrases due for review"
+                result = f"Found {len(phrases)} phrase(s) due for review:\n{phrases_list}"
+            else:
+                result = "No phrases due for review"
+            return ToolCallResult(result=result, terminal=False, user_outputs=[])
 
         elif tool_name == "show_review":
-            return f"SHOW_REVIEW:{arguments['phrase_id']}:{arguments['german']}:{arguments['explanation']}"
+            return ToolCallResult(
+                result="Review shown to user. Waiting for user rating.",
+                terminal=True,
+                user_outputs=[
+                    ShowReviewOutput(
+                        phrase_id=arguments["phrase_id"],
+                        german=arguments["german"],
+                        explanation=arguments["explanation"],
+                    )
+                ],
+            )
 
         elif tool_name == "clear_history":
             self.messages = []
-            return "True"
+            return ToolCallResult(result="True", terminal=True, user_outputs=[])
 
-        return "Unknown tool"
-
-    def _is_terminal_tool(self, tool_name: str) -> bool:
-        """Terminal tools don't trigger another LLM call - they wait for user input."""
-        return tool_name in ["save_phrase", "show_review", "clear_history"]
+        return ToolCallResult(result="Unknown tool", terminal=True, user_outputs=[])
 
     def add_user_message(self, content: str) -> None:
         """Add a user message to the conversation history."""
@@ -331,7 +326,7 @@ class GermanLearningAgent:
         """Clear the conversation history."""
         self.messages = []
 
-    def process_message(self, user_message: str) -> list[MessageOutput | ShowReviewOutput | LogOutput]:
+    def process_message(self, user_message: str) -> list[UserOutput]:
         """Process a user message and return a list of structured outputs."""
         self.add_user_message(user_message)
 
@@ -340,7 +335,7 @@ class GermanLearningAgent:
             input_list.append({"role": msg["role"], "content": msg["content"]})
 
         if self.enable_logs:
-            outputs: list[MessageOutput | ShowReviewOutput | LogOutput] = [LogOutput(message="Processing message...")]
+            outputs: list[UserOutput] = [LogOutput(message="Processing message...")]
         else:
             outputs = []
 
@@ -356,6 +351,7 @@ class GermanLearningAgent:
         max_iterations = 10
         iterations = 0
         review_shown_in_turn = False
+        was_cleared = False
 
         while response.status == "completed" and iterations < max_iterations:
             iterations += 1
@@ -374,38 +370,49 @@ class GermanLearningAgent:
 
                     tool_call_result = self._execute_tool(tool_name, tool_args)
 
-                    if tool_call_result == "CLEAR_HISTORY":
+                    # Track if history was cleared
+                    if tool_name == "clear_history":
                         was_cleared = True
                         if self.enable_logs:
                             outputs.append(LogOutput(message="History cleared"))
-                    elif tool_call_result.startswith("SHOW_REVIEW:"):
-                        parts = tool_call_result.split(":", 3)
-                        if len(parts) == 4:
+
+                    # Handle user outputs from the tool
+                    for user_output in tool_call_result.user_outputs:
+                        # Only show one review per turn
+                        if isinstance(user_output, ShowReviewOutput):
                             if not review_shown_in_turn:
-                                outputs.append(
-                                    ShowReviewOutput(
-                                        phrase_id=parts[1],
-                                        german=parts[2],
-                                        explanation=parts[3],
-                                    )
-                                )
+                                outputs.append(user_output)
                                 review_shown_in_turn = True
-                                tool_call_result = "Review shown to user. Waiting for user rating."
                                 if self.enable_logs:
-                                    outputs.append(LogOutput(message=f"Showing review for phrase ID: {parts[1]}"))
+                                    outputs.append(
+                                        LogOutput(message=f"Showing review for phrase ID: {user_output.phrase_id}")
+                                    )
                             else:
-                                tool_call_result = "Review NOT shown - only one review can be displayed per turn. This review was skipped."
                                 if self.enable_logs:
                                     outputs.append(
                                         LogOutput(message="Additional review call skipped (only 1 per turn)")
                                     )
+                        else:
+                            outputs.append(user_output)
+
+                    # Determine result string to send back to LLM
+                    llm_result = tool_call_result.result
+                    if isinstance(tool_call_result.user_outputs, list) and any(
+                        isinstance(o, ShowReviewOutput) for o in tool_call_result.user_outputs
+                    ):
+                        if not review_shown_in_turn:
+                            llm_result = tool_call_result.result
+                        else:
+                            llm_result = (
+                                "Review NOT shown - only one review can be displayed per turn. This review was skipped."
+                            )
 
                     input_list.append(
-                        {"type": "function_call_output", "call_id": output_item.call_id, "output": tool_call_result}
+                        {"type": "function_call_output", "call_id": output_item.call_id, "output": llm_result}
                     )
 
                     # Only continue calling LLM for non-terminal tools
-                    if not self._is_terminal_tool(tool_name):
+                    if not tool_call_result.terminal:
                         has_continuation_tools = True
 
             if not has_continuation_tools:

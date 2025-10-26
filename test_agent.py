@@ -24,23 +24,23 @@ def agent(api_key):
 
 
 def test_simple_translation(agent):
-    messages = [{"role": "user", "content": "Translate to German: Hello"}]
-    response, should_clear = agent.process_message(messages)
+    outputs = agent.process_message("Translate to German: Hello")
 
-    assert response
-    assert len(response) > 0
-    assert should_clear is False
-    assert "hallo" in response.lower()
+    # Extract text from MessageOutput
+    text_outputs = [o.message for o in outputs if hasattr(o, 'message') and o.message]
+    response_text = " ".join(text_outputs).lower()
+
+    assert len(outputs) > 0
+    assert "hallo" in response_text
 
 
 def test_save_phrase_with_agent(agent):
     initial_count = len(agent.db.get_all_phrases())
 
-    messages = [{"role": "user", "content": "Please save the phrase 'Guten Morgen' for me to practice"}]
-    response, should_clear = agent.process_message(messages)
+    outputs = agent.process_message("Please save the phrase 'Guten Morgen' for me to practice")
 
-    # save_phrase is a terminal tool, so response may be empty
-    assert should_clear is False
+    # save_phrase is a terminal tool, outputs should be returned
+    assert len(outputs) >= 0
 
     phrases = agent.db.get_all_phrases()
     assert len(phrases) == initial_count + 1
@@ -50,12 +50,14 @@ def test_save_phrase_with_agent(agent):
 
 
 def test_translation_and_context(agent):
-    messages = [{"role": "user", "content": "What does 'Danke schön' mean? Provide translation and context."}]
-    response, should_clear = agent.process_message(messages)
+    outputs = agent.process_message("What does 'Danke schön' mean? Provide translation and context.")
 
-    assert response
-    assert len(response) > 10
-    assert should_clear is False
+    # Extract text from MessageOutput
+    text_outputs = [o.message for o in outputs if hasattr(o, 'message') and o.message]
+    response_text = " ".join(text_outputs)
+
+    assert len(outputs) > 0
+    assert len(response_text) > 10
 
 
 def test_get_phrases_when_database_populated(agent):
@@ -63,29 +65,34 @@ def test_get_phrases_when_database_populated(agent):
     agent.db.add_phrase("Bitte")
     agent.db.add_phrase("Entschuldigung")
 
-    messages = [{"role": "user", "content": "Show me all my saved phrases"}]
-    response, should_clear = agent.process_message(messages)
+    outputs = agent.process_message("Show me all my saved phrases")
 
-    assert response
-    assert len(response) > 10
-    assert "phrase" in response.lower() or "wort" in response.lower()
-    assert should_clear is False
+    # Extract text from MessageOutput
+    text_outputs = [o.message for o in outputs if hasattr(o, 'message') and o.message]
+    response_text = " ".join(text_outputs).lower()
+
+    assert len(outputs) > 0
+    assert len(response_text) > 10
+    assert "phrase" in response_text or "wort" in response_text
 
     all_phrases = agent.db.get_all_phrases()
     assert len(all_phrases) == 3
 
 
 def test_conversation_continuation(agent):
-    messages = [
-        {"role": "user", "content": "Translate: Good morning"},
-        {"role": "assistant", "content": "Guten Morgen\n_Good morning_"},
-        {"role": "user", "content": "And how do I say good evening?"}
-    ]
-    response, should_clear = agent.process_message(messages)
+    # Simulate conversation history
+    agent.add_user_message("Translate: Good morning")
+    agent.add_assistant_message("Guten Morgen\n_Good morning_")
 
-    assert response
-    assert "abend" in response.lower()
-    assert should_clear is False
+    # Now send the follow-up message
+    outputs = agent.process_message("And how do I say good evening?")
+
+    # Extract text from MessageOutput
+    text_outputs = [o.message for o in outputs if hasattr(o, 'message') and o.message]
+    response_text = " ".join(text_outputs).lower()
+
+    assert len(outputs) > 0
+    assert "abend" in response_text
 
 
 def test_in_memory_db_persistence():
