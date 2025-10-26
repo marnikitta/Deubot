@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Generator
 
 from openai import OpenAI
 
@@ -326,8 +326,8 @@ class GermanLearningAgent:
         """Clear the conversation history."""
         self.messages = []
 
-    def process_message(self, user_message: str) -> list[UserOutput]:
-        """Process a user message and return a list of structured outputs."""
+    def process_message(self, user_message: str) -> Generator[UserOutput, None, None]:
+        """Process a user message and yield structured outputs as they appear."""
         self.add_user_message(user_message)
 
         input_list = []
@@ -335,9 +335,7 @@ class GermanLearningAgent:
             input_list.append({"role": msg["role"], "content": msg["content"]})
 
         if self.enable_logs:
-            outputs: list[UserOutput] = [LogOutput(message="Processing message...")]
-        else:
-            outputs = []
+            yield LogOutput(message="Processing message...")
 
         response = self.client.responses.create(  # type: ignore
             model=self.model,
@@ -366,7 +364,7 @@ class GermanLearningAgent:
 
                     if self.enable_logs:
                         args_str = ", ".join([f"{k}={v[:10]}" for k, v in tool_args.items()])
-                        outputs.append(LogOutput(message=f"Tool call: {tool_name}({args_str})"))
+                        yield LogOutput(message=f"Tool call: {tool_name}({args_str})")
 
                     tool_call_result = self._execute_tool(tool_name, tool_args)
 
@@ -374,26 +372,22 @@ class GermanLearningAgent:
                     if tool_name == "clear_history":
                         was_cleared = True
                         if self.enable_logs:
-                            outputs.append(LogOutput(message="History cleared"))
+                            yield LogOutput(message="History cleared")
 
                     # Handle user outputs from the tool
                     for user_output in tool_call_result.user_outputs:
                         # Only show one review per turn
                         if isinstance(user_output, ShowReviewOutput):
                             if not review_shown_in_turn:
-                                outputs.append(user_output)
+                                yield user_output
                                 review_shown_in_turn = True
                                 if self.enable_logs:
-                                    outputs.append(
-                                        LogOutput(message=f"Showing review for phrase ID: {user_output.phrase_id}")
-                                    )
+                                    yield LogOutput(message=f"Showing review for phrase ID: {user_output.phrase_id}")
                             else:
                                 if self.enable_logs:
-                                    outputs.append(
-                                        LogOutput(message="Additional review call skipped (only 1 per turn)")
-                                    )
+                                    yield LogOutput(message="Additional review call skipped (only 1 per turn)")
                         else:
-                            outputs.append(user_output)
+                            yield user_output
 
                     # Determine result string to send back to LLM
                     llm_result = tool_call_result.result
@@ -438,8 +432,6 @@ class GermanLearningAgent:
         if not was_cleared and response_text:
             self.add_assistant_message(response_text)
 
-        # Add message output if there's any text
+        # Yield message output if there's any text
         if response_text:
-            outputs.append(MessageOutput(message=response_text))
-
-        return outputs
+            yield MessageOutput(message=response_text)

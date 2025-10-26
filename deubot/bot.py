@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime, timedelta
+from typing import Iterable
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from telegram.error import BadRequest
-from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput
+from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput, UserOutput
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ class DeuBot:
             await update.message.reply_text(f"Fehler / Error: {str(e)}")
             raise
 
-    async def _handle_outputs(self, message, outputs: list[MessageOutput | ShowReviewOutput | LogOutput]) -> None:
+    async def _handle_outputs(self, message, outputs: Iterable[UserOutput]) -> None:
         for output in outputs:
             if isinstance(output, MessageOutput):
                 if output.message:
