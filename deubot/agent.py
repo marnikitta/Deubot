@@ -110,7 +110,7 @@ class GermanLearningAgent:
             {
                 "type": "function",
                 "name": "get_vocabulary",
-                "description": "Get user's vocabulary with custom limit and sorting. Useful for creating sentences, estimating language level, or analyzing vocabulary knowledge.",
+                "description": "Get user's vocabulary with custom limit and sorting. Use this immediately when user asks: 'estimate my language level', 'what's my vocabulary like?', 'show my vocab', 'create a sentence with my words', or any request to analyze/view their vocabulary.",
                 "strict": True,
                 "parameters": {
                     "type": "object",
