@@ -71,16 +71,18 @@ The bot will:
 
 - `/start` - Initialize the bot and get welcome message
 - `/clear` - Clear conversation history
-- `/stats` - View your learning statistics (total phrases, due reviews, etc.)
-- `/review` - Start a spaced repetition review session
+- `/debug` - Toggle debug logging
 
 ### Spaced Repetition
 
-Ask the bot to start a spaced repetition session:
+The bot understands natural language requests for reviewing phrases. Just ask naturally:
 
 ```
 You: Let's practice my saved phrases
 Bot: [Starts review session, showing German phrases for you to recall]
+
+You: Show me my statistics
+Bot: [Shows learning statistics]
 ```
 
 The bot will present phrases and you can respond with how well you remembered them. The system uses a modified SM-2 algorithm to schedule reviews optimally.

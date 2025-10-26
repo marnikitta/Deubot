@@ -56,8 +56,6 @@ class DeuBot:
             "<i>Send me German or English text and I'll translate it for you.</i>\n\n"
             "Befehle / <i>Commands:</i>\n"
             "/clear - Verlauf löschen / <i>Clear history</i>\n"
-            "/stats - Statistiken / <i>Show statistics</i>\n"
-            "/review - Wiederholung starten / <i>Start review session</i>\n"
             "/debug - Debug-Logging umschalten / <i>Toggle debug logging</i>",
             parse_mode="HTML",
         )
@@ -68,30 +66,6 @@ class DeuBot:
 
         self._clear_history()
         await update.message.reply_text("Verlauf gelöscht!\n<i>Conversation history cleared!</i>", parse_mode="HTML")
-
-    async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.message:
-            return
-
-        phrases = self.agent.db.get_all_phrases()
-        due_phrases = self.agent.db.get_due_phrases()
-
-        stats_text = "Lernstatistiken\n<i>Learning Statistics</i>\n\n"
-        stats_text += f"Gesamt: {len(phrases)} Phrasen\n<i>Total: {len(phrases)} phrases</i>\n"
-        stats_text += f"Fällig: {len(due_phrases)} Phrasen\n<i>Due for review: {len(due_phrases)} phrases</i>"
-
-        await update.message.reply_text(stats_text, parse_mode="HTML")
-
-    async def review_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.message:
-            return
-
-        try:
-            outputs = self.agent.process_message("I want to start a review session")
-            await self._handle_outputs(update.message, outputs)
-        except Exception as e:
-            await update.message.reply_text(f"Fehler / Error: {str(e)}")
-            raise
 
     async def debug_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.message:
@@ -229,8 +203,6 @@ class DeuBot:
 
         application.add_handler(CommandHandler("start", self.start_command, filters=auth_filter))
         application.add_handler(CommandHandler("clear", self.clear_command, filters=auth_filter))
-        application.add_handler(CommandHandler("stats", self.stats_command, filters=auth_filter))
-        application.add_handler(CommandHandler("review", self.review_command, filters=auth_filter))
         application.add_handler(CommandHandler("debug", self.debug_command, filters=auth_filter))
         application.add_handler(CallbackQueryHandler(self.handle_callback))
         application.add_handler(MessageHandler(auth_filter & filters.TEXT & ~filters.COMMAND, self.handle_message))
