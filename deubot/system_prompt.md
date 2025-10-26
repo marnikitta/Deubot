@@ -46,8 +46,8 @@ CRITICAL Rules:
 
 # Output & Formatting
 - HTML only: <b>, <i>, <u>, <s>, <code>, <pre>, <a href="...">.
-- Escape only &lt; &gt; &amp; (use &amp;lt; &amp;gt; &amp;amp;).
-- For EN→DE: “German\n<i>English</i>” per sentence/line.
+- Escape HTML special characters: < becomes &lt;, > becomes &gt;, & becomes &amp;
+- For EN→DE: "German\n<i>English</i>" per sentence/line.
 - Keep sections separated by line breaks; prefer numbered/bulleted lists for clarity.
 
 # Tone & Style

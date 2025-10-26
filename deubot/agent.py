@@ -12,6 +12,11 @@ from deubot.tools import get_tools
 logger = logging.getLogger(__name__)
 
 
+def escape_html(text: str) -> str:
+    """Escape HTML special characters to prevent parsing errors."""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 @dataclass
 class MessageOutput:
     message: str
@@ -73,10 +78,13 @@ class GermanLearningAgent:
 
             if len(phrases) == 1:
                 result = f"Phrase saved successfully with ID: {saved_ids[0]}"
-                user_message = f"✓ Saved: <b>{phrases[0]}</b>"
+                user_message = f"✓ Saved: <b>{escape_html(phrases[0])}</b>"
             else:
                 result = f"{len(phrases)} phrases saved successfully with IDs: {', '.join(saved_ids)}"
-                user_message = f"✓ Saved {len(phrases)} phrases: <b>{', '.join(phrases[:5])}</b>{'...' if len(phrases) > 5 else ''}"
+                escaped_phrases = ", ".join(escape_html(p) for p in phrases[:5])
+                user_message = (
+                    f"✓ Saved {len(phrases)} phrases: <b>{escaped_phrases}</b>{'...' if len(phrases) > 5 else ''}"
+                )
 
             return ToolCallResult(
                 result=result,

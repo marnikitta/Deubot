@@ -4,7 +4,15 @@ from typing import Iterable
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from telegram.error import BadRequest
-from deubot.agent import GermanLearningAgent, MessageOutput, ShowReviewOutput, LogOutput, TypingOutput, UserOutput
+from deubot.agent import (
+    GermanLearningAgent,
+    MessageOutput,
+    ShowReviewOutput,
+    LogOutput,
+    TypingOutput,
+    UserOutput,
+    escape_html,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +104,7 @@ class DeuBot:
         keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{review.phrase_id}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{review.german}</b>\n\n<i>Was bedeutet das? / What does this mean?</i>"
+        text = f"<b>{escape_html(review.german)}</b>\n\n<i>Was bedeutet das? / What does this mean?</i>"
         await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -140,7 +148,7 @@ class DeuBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{german}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
+        text = f"<b>{escape_html(german)}</b>\n\n{escape_html(explanation)}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
         try:
             await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
         except BadRequest as e:
@@ -161,7 +169,7 @@ class DeuBot:
         self.review_state = {}
 
         try:
-            text = f"<b>{german}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
+            text = f"<b>{escape_html(german)}</b>\n\n{escape_html(explanation)}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             await query.edit_message_text(
                 text,
                 parse_mode="HTML",
