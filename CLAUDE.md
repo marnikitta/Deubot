@@ -43,8 +43,15 @@ The default deployment host is `deubot`, configured in the Makefile. Change `hos
 ### Core Modules
 
 - **main.py**: Application entry point with `main()` function
+- **agent.py**: AI agent with OpenAI integration, tool calling, and typed output system
+- **bot.py**: Telegram bot handler with message routing and user interaction
+- **database.py**: JSON-based phrase storage with spaced repetition (SM-2 algorithm)
 - **dotenv.py**: Custom .env file parser that loads environment variables from a `.env` file, supporting quoted and unquoted values
 - **systemd.py**: Systemd integration using Type=notify protocol to signal service readiness via NOTIFY_SOCKET
+
+### Database & Spaced Repetition
+
+SM-2 based spaced repetition with JSON persistence. Quality ratings adjust ease factors and intervals for optimal review scheduling.
 
 ### Systemd Service Integration
 
@@ -74,9 +81,13 @@ The service is configured to:
 - Linting: flake8 with E501, W503, E203 ignored
 
 
-## Code style
+## Code Style
 
-- Write in canonical python style using types
+- Write in canonical Python style using types
 - Keep comments to a bare minimum, don't comment each function or class
-- Prefer composition over inheritence. Make code composable
-- Keep dependencies conservative, dont add a dependency for each little thing
+- Prefer composition over inheritance. Make code composable
+- Keep dependencies conservative, don't add a dependency for each little thing
+- Use dataclasses for structured data
+- Use type aliases for complex unions
+- Return typed objects instead of magic strings or status codes
+- Use boolean flags with clear names (e.g., terminal, enable_logs)
