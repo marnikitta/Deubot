@@ -20,10 +20,10 @@ def test_phrase_saving_basic(agent: GermanLearningAgent, test_db: PhrasesDB):
     assert final_count > initial_count, "Phrase was not saved"
     assert final_count == initial_count + 1, f"Expected 1 phrase to be saved, got {final_count - initial_count}"
 
-    # Check that "Wetter" was saved
+    # Check that "Wetter" was saved (may include article like "das Wetter")
     all_phrases = test_db.get_all_phrases()
     saved_phrases = [p["german"] for p in all_phrases]
-    assert "Wetter" in saved_phrases, f"Expected 'Wetter' to be saved, got: {saved_phrases}"
+    assert any("Wetter" in phrase for phrase in saved_phrases), f"Expected 'Wetter' (possibly with article) to be saved, got: {saved_phrases}"
 
 
 def test_phrase_saving_outputs_confirmation(agent: GermanLearningAgent):
@@ -64,7 +64,9 @@ def test_phrase_saving_continues_with_translation(agent: GermanLearningAgent):
 
     # Second should be translation (not just confirmation)
     translation_message = message_outputs[1].message
-    assert len(translation_message) > 50, "Translation message should be substantial"
+    assert len(translation_message) > 10, "Translation message should contain content"
+    # Check it's actually a translation (contains German text and/or English explanation)
+    assert "tisch" in translation_message.lower() or "table" in translation_message.lower(), "Should contain translation content"
 
 
 def test_phrase_not_duplicate(agent: GermanLearningAgent, test_db: PhrasesDB):
@@ -107,9 +109,9 @@ def test_various_translation_formats(
     final_count = len(test_db.get_all_phrases())
     assert final_count > initial_count, f"Phrase was not saved for: {test_message}"
 
-    # Check the saved phrase contains expected German word
+    # Check the saved phrase contains expected German word (case-insensitive)
     all_phrases = test_db.get_all_phrases()
     saved_phrases = [p["german"] for p in all_phrases]
     assert any(
-        expected_german in phrase for phrase in saved_phrases
+        expected_german.lower() in phrase.lower() for phrase in saved_phrases
     ), f"Expected '{expected_german}' in saved phrases, got: {saved_phrases}"

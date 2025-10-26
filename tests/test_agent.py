@@ -60,10 +60,12 @@ def test_get_phrases_when_database_populated(agent: GermanLearningAgent):
 
     assert len(outputs) > 0
     assert len(response_text) > 10
-    assert "phrase" in response_text or "wort" in response_text
 
+    # Check that at least one of the saved phrases appears in response
     all_phrases = agent.db.get_all_phrases()
     assert len(all_phrases) == 3
+    phrase_texts = [p["german"].lower() for p in all_phrases]
+    assert any(phrase in response_text for phrase in phrase_texts), f"No saved phrases found in response: {response_text}"
 
 
 def test_conversation_continuation(agent: GermanLearningAgent):
