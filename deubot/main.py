@@ -3,7 +3,6 @@ import os
 import sys
 from pathlib import Path
 from deubot.dotenv import load_dotenv
-from deubot.systemd import try_notify_systemd
 from deubot.database import PhrasesDB
 from deubot.agent import GermanLearningAgent
 from deubot.bot import DeuBot
@@ -57,7 +56,6 @@ def main():
     agent = GermanLearningAgent(api_key=openai_api_key, model=openai_model, db=db)
     bot = DeuBot(token=telegram_token, allowed_user_id=allowed_user_id, agent=agent)
 
-    try_notify_systemd()
     logger.info("DeuBot is running...")
     bot.run()
 

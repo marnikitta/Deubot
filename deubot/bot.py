@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Iterable
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -13,6 +14,7 @@ from deubot.agent import (
     UserOutput,
     escape_html,
 )
+from deubot.systemd import notify_systemd
 
 logger = logging.getLogger(__name__)
 
@@ -203,8 +205,14 @@ class DeuBot:
             await update.message.reply_text(f"Fehler / Error: {str(e)}")
             raise
 
+    async def post_init(self, _: Application) -> None:
+        logger.info("Bot initialized successfully")
+        notify_socket = os.getenv("NOTIFY_SOCKET")
+        if notify_socket:
+            notify_systemd(notify_socket)
+
     def run(self) -> None:
-        application = Application.builder().token(self.token).build()
+        application = Application.builder().token(self.token).post_init(self.post_init).build()
         auth_filter = AuthFilter(self.allowed_user_id)
 
         application.add_handler(CommandHandler("start", self.start_command, filters=auth_filter))

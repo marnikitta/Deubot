@@ -2,7 +2,7 @@
 
 import pytest
 
-from deubot.agent import GermanLearningAgent, MessageOutput, LogOutput
+from deubot.agent import GermanLearningAgent, MessageOutput
 from deubot.database import PhrasesDB
 
 
@@ -13,7 +13,7 @@ def test_phrase_saving_basic(agent: GermanLearningAgent, test_db: PhrasesDB):
     test_message = "How to say weather?"
 
     # Act
-    outputs = list(agent.process_message(test_message))
+    _ = list(agent.process_message(test_message))
 
     # Assert
     final_count = len(test_db.get_all_phrases())
@@ -107,7 +107,7 @@ def test_various_translation_formats(
     initial_count = len(test_db.get_all_phrases())
 
     # Act
-    outputs = list(agent.process_message(test_message))
+    _ = list(agent.process_message(test_message))
 
     # Assert
     final_count = len(test_db.get_all_phrases())

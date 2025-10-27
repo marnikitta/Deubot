@@ -2,7 +2,7 @@
 
 import pytest
 
-from deubot.agent import GermanLearningAgent, LogOutput
+from deubot.agent import GermanLearningAgent
 from deubot.database import PhrasesDB
 
 
@@ -38,14 +38,7 @@ def test_translation_request_saving(
     initial_count = len(test_db.get_all_phrases())
 
     # Act
-    outputs = list(agent.process_message(test_message))
-
-    # Check if outputs were generated
-    _response_types: list[str] = []
-    for output in outputs:
-        if isinstance(output, LogOutput) and "Response types:" in output.message:
-            _response_types_str = output.message.split("Response types: ")[1]
-            break
+    _ = list(agent.process_message(test_message))
 
     # Assert
     final_count = len(test_db.get_all_phrases())
@@ -74,12 +67,14 @@ def test_save_phrases_tool_called(agent: GermanLearningAgent):
     outputs = list(agent.process_message(test_message))
 
     # Assert - check log outputs for tool call
+    from deubot.agent import LogOutput
+
     log_outputs = [o for o in outputs if isinstance(o, LogOutput)]
     tool_call_logs = [log.message for log in log_outputs if "Tool call: save_phrases" in log.message]
 
     assert len(tool_call_logs) > 0, (
         f"Expected save_phrases tool to be called for '{test_message}', "
-        f"but no tool call was logged. Logs: {[l.message for l in log_outputs]}"
+        f"but no tool call was logged. Logs: {[log_msg.message for log_msg in log_outputs]}"
     )
 
 
@@ -89,7 +84,7 @@ def test_function_call_in_response_types(agent: GermanLearningAgent):
     test_message = "How to say window?"
 
     # Act
-    outputs = list(agent.process_message(test_message))
+    _ = list(agent.process_message(test_message))
 
     # Assert - verify the phrase was actually saved to the database
     phrases = agent.db.get_all_phrases()

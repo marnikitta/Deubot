@@ -1,9 +1,6 @@
 """Tests for the review process with spaced repetition."""
 
-import pytest
-
 from deubot.agent import GermanLearningAgent, ShowReviewOutput, MessageOutput
-from deubot.database import PhrasesDB
 
 
 def test_review_session_with_multiple_phrases(agent: GermanLearningAgent):
@@ -111,8 +108,8 @@ def test_review_updates_database(agent: GermanLearningAgent):
 def test_review_with_different_quality_ratings(agent: GermanLearningAgent):
     """Test that different quality ratings affect the review schedule (simulating bot.py behavior)."""
     # Add two phrases
-    phrase1_id = agent.db.add_phrase("Entschuldigung")
-    phrase2_id = agent.db.add_phrase("Bitte")
+    _ = agent.db.add_phrase("Entschuldigung")
+    _ = agent.db.add_phrase("Bitte")
 
     # Start review session - get first phrase
     outputs = list(agent.process_message("I want to start a review session"))
