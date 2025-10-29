@@ -99,3 +99,4 @@ The service is configured to:
 - Dont run tests if it is not required by the task. They are long and comprehensive for end2end testing
 - Use `logging.getLogger(__name__)` for logger instances to enable hierarchical filtering
 - Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Include relevant context directly in log messages
+- Keep the specific tool calls examples in the tools.py rather than system prompt

@@ -150,7 +150,7 @@ class DeuBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{escape_html(german)}</b>\n\n{escape_html(explanation)}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
+        text = f"<b>{escape_html(german)}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
         try:
             await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
         except BadRequest as e:
@@ -171,7 +171,7 @@ class DeuBot:
         self.review_state = {}
 
         try:
-            text = f"<b>{escape_html(german)}</b>\n\n{escape_html(explanation)}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
+            text = f"<b>{escape_html(german)}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             await query.edit_message_text(
                 text,
                 parse_mode="HTML",

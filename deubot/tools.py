@@ -25,31 +25,40 @@ def get_tools() -> list[dict[str, Any]]:
             "name": "save_phrases",
             "description": """Save one or more German phrases to the learning database for spaced repetition review.
 
-CRITICAL: MUST call this BEFORE providing any response that translates or explains German phrase(s).
+Call this tool immediately when the user provides or asks about concrete German phrase(s), then provide your response. Do not announce your intent to save before calling the tool.
 
 Usage Pattern:
 1. Detect if concrete German phrase(s) will be produced or interpreted
 2. Call save_phrases with list of German texts (even if just one phrase)
-3. Then provide your response per language policy
+3. Add articles (der/die/das) to all nouns - this is critical for German learning
+4. Then provide your response per language policy
 
 DO NOT call for grammar questions, general explanations, or language concepts.
 DO NOT call when user explicitly asks not to save.
+
+Article Handling:
+German nouns need their articles to be useful for learning. When saving:
+- User sends "Gleis" → save as "das Gleis" (add the article)
+- User sends "Hund" → save as "der Hund" (add the article)
+- User sends "Katze" → save as "die Katze" (add the article)
+- User sends "der Tisch" → save as "der Tisch" (article already present)
+- Non-nouns like "Hallo", "Guten Morgen" → save as-is (no article needed)
 
 BATCH SAVING:
 Always pass phrases as an array, even for a single phrase. This tool is optimized for batch operations.
 
 Single Phrase Examples:
-- User: "How do you say umbrella?" → save_phrases(["der Regenschirm"]) BEFORE responding
-- User: "What does Krankenhaus mean?" → save_phrases(["Krankenhaus"]) BEFORE explaining
-- User: "Guten Abend" → save_phrases(["Guten Abend"]) BEFORE translating
-- User: "Translate 'the book' to German" → save_phrases(["das Buch"]) BEFORE responding
+- User: "How do you say umbrella?" → save_phrases(["der Regenschirm"]) then respond
+- User: "What does Krankenhaus mean?" → save_phrases(["Krankenhaus"]) then explain
+- User: "Guten Abend" → save_phrases(["Guten Abend"]) then translate
+- User: "Translate 'the book' to German" → save_phrases(["das Buch"]) then respond
 
 Batch Examples (Multiple Phrases):
-- User: "Translate: hello, goodbye, thank you" → save_phrases(["Hallo", "Auf Wiedersehen", "Danke"]) BEFORE responding
-- User: "What are Tisch, Stuhl, Lampe?" → save_phrases(["der Tisch", "der Stuhl", "die Lampe"]) BEFORE translating
-- User: "Save 5 different common domestic animals" → save_phrases(["der Hund", "die Katze", "das Pferd", "der Hamster", "der Fisch"]) BEFORE listing them
-- User: "Give me 10 fruits in German" → save_phrases([all 10 fruit words with articles]) BEFORE providing list
-- User provides list of 100 words to learn → save_phrases([all 100 phrases]) BEFORE responding
+- User: "Translate: hello, goodbye, thank you" → save_phrases(["Hallo", "Auf Wiedersehen", "Danke"]) then respond
+- User: "What are Tisch, Stuhl, Lampe?" → save_phrases(["der Tisch", "der Stuhl", "die Lampe"]) then translate
+- User: "Save 5 different common domestic animals" → save_phrases(["der Hund", "die Katze", "das Pferd", "der Hamster", "der Fisch"]) then list them
+- User: "Give me 10 fruits in German" → save_phrases([all 10 fruit words with articles]) then provide list
+- User provides list of 100 words to learn → save_phrases([all 100 phrases]) then respond
 
 Large Batch Examples:
 - Vocabulary list import: save_phrases([hundreds or thousands of phrases]) - no limit on array size
@@ -61,6 +70,20 @@ When NOT to Use:
 - User: "What's the difference between der/die/das?" → Grammar explanation only
 - User asks about conjugation rules → General concept only
 - User: "just explain, don't save" → Respect user preference
+
+Tool Calling Pattern:
+
+RIGHT - Call tool immediately:
+User: Notruf
+Assistant: [calls save_phrases(["Notruf"])]
+Assistant: <b>Emergency call</b>
+
+Notruf refers to an emergency phone call...
+
+WRONG - Announcing intent first:
+User: Notruf
+Assistant: Calling save_phrases for the German phrase and then explaining per policy...
+[This creates unnecessary back-and-forth - user sees this message before the actual content]
 
 Important Notes:
 - ALWAYS pass an array, even for single phrases: ["der Hund"] not "der Hund"
