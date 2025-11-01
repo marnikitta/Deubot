@@ -8,7 +8,7 @@ run:
 	uv run python -m $(package).main
 
 test:
-	uv run pytest tests/ -n 10 -v --tb=short
+	uv run pytest tests/ -n 20 -v --tb=short
 
 lint:
 	uv run mypy --check-untyped-defs $(package) tests

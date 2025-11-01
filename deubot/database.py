@@ -1,6 +1,7 @@
 import gzip
 import json
 import logging
+import unicodedata
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
@@ -48,7 +49,52 @@ class PhrasesDB:
                 phrase_dict["_id"] = phrase_dict.pop("id")
                 f.write(json.dumps(phrase_dict, ensure_ascii=False) + "\n")
 
-    def add_phrase(self, german: str) -> str:
+    def _normalize_phrase(self, phrase: str) -> str:
+        normalized = unicodedata.normalize("NFC", phrase)
+        normalized = normalized.lower().strip()
+        normalized = " ".join(normalized.split())
+
+        # Remove common German articles for comparison
+        for article in ["der ", "die ", "das ", "ein ", "eine ", "einen ", "einem ", "einer ", "eines "]:
+            if normalized.startswith(article):
+                normalized = normalized[len(article) :]
+                break
+
+        return normalized
+
+    def _calculate_similarity(self, phrase1: str, phrase2: str) -> float:
+        def get_trigrams(text: str) -> set[str]:
+            text = f"  {text} "
+            return {text[i : i + 3] for i in range(len(text) - 2)}
+
+        trigrams1 = get_trigrams(phrase1)
+        trigrams2 = get_trigrams(phrase2)
+
+        if not trigrams1 or not trigrams2:
+            return 1.0 if phrase1 == phrase2 else 0.0
+
+        intersection = len(trigrams1 & trigrams2)
+        union = len(trigrams1 | trigrams2)
+        return intersection / union if union > 0 else 0.0
+
+    def find_similar_phrase(self, german: str, threshold: float = 0.85) -> Phrase | None:
+        normalized_input = self._normalize_phrase(german)
+
+        for phrase in self.phrases.values():
+            normalized_existing = self._normalize_phrase(phrase.german)
+            similarity = self._calculate_similarity(normalized_input, normalized_existing)
+
+            if similarity >= threshold:
+                return phrase
+
+        return None
+
+    def add_phrase(self, german: str) -> tuple[str, bool, str | None]:
+        existing_phrase = self.find_similar_phrase(german)
+
+        if existing_phrase:
+            return (existing_phrase.id, False, existing_phrase.german)
+
         phrase_id = f"{len(self.phrases) + 1}"
         now = datetime.now().isoformat()
         phrase = Phrase(
@@ -58,7 +104,7 @@ class PhrasesDB:
         )
         self.phrases[phrase_id] = phrase
         self._save()
-        return phrase_id
+        return (phrase_id, True, None)
 
     def update_review(self, phrase_id: str, quality: int) -> None:
         if phrase_id not in self.phrases:

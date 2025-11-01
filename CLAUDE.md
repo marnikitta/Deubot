@@ -18,11 +18,11 @@ make run
 
 ### Testing
 ```bash
-# Run all tests in parallel (default: 10 workers)
+# Run all tests in parallel (ALWAYS use -n flag for parallel execution)
 make test
 
-# Run all tests with custom worker count
-uv run pytest tests/ -n 10 -v
+# Run all tests with custom worker count (recommended: 20 workers for LLM tests)
+uv run pytest tests/ -n 20 -v
 
 # Run single test file
 uv run pytest tests/test_review_process.py -v
@@ -34,7 +34,10 @@ uv run pytest tests/test_review_process.py::test_review_session_completes_when_n
 uv run pytest tests/ -k "review" -v
 ```
 
-**Testing Best Practice**: When fixing a specific test, ALWAYS run only that test for fast feedback. Running the full test suite should only be done after the specific test passes.
+**Testing Best Practice**:
+- ALWAYS run tests in parallel with `-n 20` flag since LLM-related tests are very slow (30-50 seconds per test)
+- When fixing a specific test, ALWAYS run only that test for fast feedback
+- Running the full test suite should only be done after the specific test passes
 
 ### Linting
 ```bash

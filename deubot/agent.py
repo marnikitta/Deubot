@@ -76,20 +76,48 @@ class GermanLearningAgent:
                 phrases = [phrases]
 
             saved_ids = []
-            for german in phrases:
-                phrase_id = self.db.add_phrase(german=german)
-                saved_ids.append(phrase_id)
-                logger.info(f"Saved phrase '{german}' with ID {phrase_id}")
+            new_phrases = []
+            duplicate_phrases = []
 
+            for german in phrases:
+                phrase_id, is_new, existing_german = self.db.add_phrase(german=german)
+                saved_ids.append(phrase_id)
+
+                if is_new:
+                    new_phrases.append(german)
+                    logger.info(f"Saved new phrase '{german}' with ID {phrase_id}")
+                else:
+                    duplicate_phrases.append((german, existing_german))
+                    logger.info(f"Phrase '{german}' already exists as '{existing_german}' with ID {phrase_id}")
+
+            # Generate user message based on what was saved
+            user_message_parts = []
+
+            if new_phrases:
+                if len(new_phrases) == 1:
+                    user_message_parts.append(f"✓ Saved: <b>{escape_html(new_phrases[0])}</b>")
+                else:
+                    escaped_phrases = ", ".join(escape_html(p) for p in new_phrases[:5])
+                    suffix = "..." if len(new_phrases) > 5 else ""
+                    user_message_parts.append(f"✓ Saved {len(new_phrases)} phrases: <b>{escaped_phrases}</b>{suffix}")
+
+            if duplicate_phrases:
+                for user_phrase, existing_phrase in duplicate_phrases:
+                    if user_phrase.lower() == existing_phrase.lower():
+                        user_message_parts.append(f"Already saved: <b>{escape_html(existing_phrase)}</b>")
+                    else:
+                        user_message_parts.append(
+                            f"Already saved: <b>{escape_html(existing_phrase)}</b> "
+                            f"(you entered: {escape_html(user_phrase)})"
+                        )
+
+            user_message = "\n".join(user_message_parts)
+
+            # Result message for the agent (no difference for agent)
             if len(phrases) == 1:
                 result = f"Phrase saved successfully with ID: {saved_ids[0]}"
-                user_message = f"✓ Saved: <b>{escape_html(phrases[0])}</b>"
             else:
                 result = f"{len(phrases)} phrases saved successfully with IDs: {', '.join(saved_ids)}"
-                escaped_phrases = ", ".join(escape_html(p) for p in phrases[:5])
-                user_message = (
-                    f"✓ Saved {len(phrases)} phrases: <b>{escaped_phrases}</b>{'...' if len(phrases) > 5 else ''}"
-                )
 
             return ToolCallResult(
                 result=result,
