@@ -161,8 +161,9 @@ class GermanLearningAgent:
             ascending = arguments.get("ascending", True)
             phrases = self.db.get_vocabulary(limit=limit, sort_by=sort_by, ascending=ascending)
             if phrases:
-                german_phrases = [p["german"] for p in phrases]
-                phrases_list = "\n".join([f"- {german}" for german in german_phrases])
+                phrases_list = "\n".join(
+                    [f"- ID: {p['id']}, German: {p['german']}, Ease: {p['ease_factor']:.1f}" for p in phrases]
+                )
                 result = f"Found {len(phrases)} phrase(s) in vocabulary:\n{phrases_list}"
                 logger.info(
                     f"Retrieved {len(phrases)} phrases from vocabulary (sort_by={sort_by}, ascending={ascending})"
@@ -171,6 +172,61 @@ class GermanLearningAgent:
                 result = "No phrases in vocabulary"
                 logger.info("No phrases in vocabulary")
             return ToolCallResult(result=result, terminal=False, user_outputs=[])
+
+        elif tool_name == "remove_phrases":
+            phrase_ids = arguments["phrase_ids"]
+            if not isinstance(phrase_ids, list):
+                phrase_ids = [phrase_ids]
+
+            # Get phrase details before removing
+            phrases_to_remove = []
+            for phrase_id in phrase_ids:
+                if phrase_id in self.db.phrases:
+                    phrases_to_remove.append((phrase_id, self.db.phrases[phrase_id].german))
+
+            removed_ids, not_found_ids = self.db.remove_phrases(phrase_ids)
+
+            # Generate user message based on what was removed
+            user_message_parts = []
+
+            if removed_ids:
+                if len(removed_ids) == 1:
+                    removed_german = next(german for pid, german in phrases_to_remove if pid == removed_ids[0])
+                    user_message_parts.append(f"✗ Removed: <b>{escape_html(removed_german)}</b> (ID: {removed_ids[0]})")
+                else:
+                    user_message_parts.append(f"✗ Removed {len(removed_ids)} phrases:")
+                    for phrase_id in removed_ids[:5]:
+                        removed_german = next(german for pid, german in phrases_to_remove if pid == phrase_id)
+                        user_message_parts.append(f"  - <b>{escape_html(removed_german)}</b> (ID: {phrase_id})")
+                    if len(removed_ids) > 5:
+                        user_message_parts.append(f"  ... and {len(removed_ids) - 5} more")
+
+            if not_found_ids:
+                if len(not_found_ids) == 1:
+                    user_message_parts.append(f"⚠ Phrase ID {not_found_ids[0]} not found")
+                else:
+                    user_message_parts.append(
+                        f"⚠ {len(not_found_ids)} phrase IDs not found: {', '.join(not_found_ids)}"
+                    )
+
+            user_message = "\n".join(user_message_parts)
+
+            # Result message for the agent
+            if len(removed_ids) == 1:
+                result = f"Phrase {removed_ids[0]} removed successfully"
+            elif removed_ids:
+                result = f"{len(removed_ids)} phrases removed successfully: {', '.join(removed_ids)}"
+            else:
+                result = "No phrases were removed (all IDs not found)"
+
+            if not_found_ids:
+                result += f". {len(not_found_ids)} ID(s) not found: {', '.join(not_found_ids)}"
+
+            return ToolCallResult(
+                result=result,
+                terminal=False,
+                user_outputs=[MessageOutput(message=user_message)],
+            )
 
         return ToolCallResult(result="Unknown tool", terminal=True, user_outputs=[])
 

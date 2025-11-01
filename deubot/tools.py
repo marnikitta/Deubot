@@ -219,12 +219,13 @@ Usage Pattern:
 - Adjust limit based on task (small for sentences, large for analysis)
 
 When to Use:
-- "Estimate my language level" → limit=2000, sort_by="mastery", ascending=False
-- "What's my vocabulary like?" → limit=100, sort_by="mastery", ascending=False
+- "Estimate my language level" → limit=2000, sort_by="proficiency", ascending=False
+- "What's my vocabulary like?" → limit=100, sort_by="proficiency", ascending=False
 - "Show me my saved phrases" → limit=100, sort_by="id", ascending=True
-- "Create a sentence with my words" → limit=50, sort_by="mastery", ascending=False
+- "Create a sentence with my words" → limit=50, sort_by="proficiency", ascending=False
 - "What are my newest words?" → limit=20, sort_by="id", ascending=False
-- "Which phrases do I know best?" → limit=30, sort_by="mastery", ascending=False
+- "Which phrases do I know best?" → limit=30, sort_by="proficiency", ascending=False
+- "Which phrases are hardest for me?" → limit=30, sort_by="proficiency", ascending=True
 - "List phrases alphabetically" → limit=100, sort_by="alphabetical", ascending=True
 
 When NOT to Use:
@@ -233,11 +234,11 @@ When NOT to Use:
 
 Sorting Strategies:
 
-**sort_by="mastery"** (Mastery Level)
+**sort_by="proficiency"** (Proficiency Level)
 - Calculated as: ease_factor × interval_days
-- ascending=False → Best known phrases first
-- ascending=True → Weakest phrases first
-Use for: Level estimation, creating sentences, finding words to focus on
+- ascending=False → Best known phrases first (highest proficiency)
+- ascending=True → Weakest phrases first (lowest proficiency, hardest for user)
+Use for: Level estimation, creating sentences, finding words to focus on, identifying difficult phrases
 
 **sort_by="alphabetical"** (A-Z by German text)
 - ascending=True → A to Z
@@ -252,18 +253,23 @@ Use for: Seeing learning progression, finding recent additions
 Limit Guidelines:
 - Level estimation: 2000 (get everything)
 - Vocabulary review: 100-200
-- Sentence creation: 30-50 (most mastered)
+- Sentence creation: 30-50 (most proficient)
 - Quick check: 10-20
 - Maximum allowed: 2000
 
 Return Format:
-Returns list of phrases with German text only:
-"- Guten Morgen"
-"- das Buch"
-"- Krankenhaus"
+Returns list of phrases with ID, German text, and ease_factor:
+"- ID: 42, German: Guten Morgen, Ease: 2.5"
+"- ID: 123, German: das Buch, Ease: 1.8"
+"- ID: 456, German: Krankenhaus, Ease: 3.2"
+
+The ease_factor indicates how well the user knows the phrase:
+- Lower ease (< 2.0): Difficult phrases for the user
+- Medium ease (2.0-2.8): Average proficiency
+- Higher ease (> 2.8): Well-known phrases
 
 Analysis Approach:
-Count phrases, assess variety/complexity, identify CEFR level indicators (A1: Hallo, Danke; A2: einkaufen, gestern; B1: obwohl, trotzdem), assess grammar coverage, provide level estimate with evidence.
+Count phrases, assess variety/complexity, identify CEFR level indicators (A1: Hallo, Danke; A2: einkaufen, gestern; B1: obwohl, trotzdem), assess grammar coverage, analyze ease factors to identify struggling areas, provide level estimate with evidence.
 """,
             "strict": True,
             "parameters": {
@@ -275,15 +281,72 @@ Count phrases, assess variety/complexity, identify CEFR level indicators (A1: Ha
                     },
                     "sort_by": {
                         "type": "string",
-                        "enum": ["alphabetical", "mastery", "id"],
-                        "description": "Sort order. 'alphabetical': A-Z by German text. 'mastery': by ease_factor × interval_days (best known phrases). 'id': by addition order (oldest/newest). Choose based on user goal.",
+                        "enum": ["alphabetical", "proficiency", "id"],
+                        "description": "Sort order. 'alphabetical': A-Z by German text. 'proficiency': by ease_factor × interval_days (best known phrases when descending, hardest when ascending). 'id': by addition order (oldest/newest). Choose based on user goal.",
                     },
                     "ascending": {
                         "type": "boolean",
-                        "description": "Sort direction. True: ascending order. False: descending order. For mastery, False=best phrases first. For id, False=newest first.",
+                        "description": "Sort direction. True: ascending order. False: descending order. For proficiency, False=best phrases first, True=hardest phrases first. For id, False=newest first.",
                     },
                 },
                 "required": ["limit", "sort_by", "ascending"],
+                "additionalProperties": False,
+            },
+        },
+        {
+            "type": "function",
+            "name": "remove_phrases",
+            "description": """Remove one or more German phrases from the learning database.
+
+Call this tool when the user explicitly asks to remove, delete, or unlearn specific phrases.
+
+Usage Pattern:
+1. User identifies phrases to remove (by name or by asking you to list them first)
+2. Call remove_phrases with list of phrase IDs
+3. Tool will notify user of removed and not-found phrases
+4. Then provide your response per language policy
+
+When to Use:
+- User: "Remove phrase 42" → remove_phrases([42])
+- User: "Delete phrases 10, 15, and 20" → remove_phrases([10, 15, 20])
+- User: "Remove the hardest phrases" → First call get_vocabulary(sort_by="proficiency", ascending=True), then remove_phrases([ids])
+- User: "Delete all phrases with 'Hund'" → First find them, then remove_phrases([ids])
+
+When NOT to Use:
+- User doesn't explicitly ask to remove phrases
+- User is just browsing vocabulary
+- User wants to reset review schedule (this tool permanently deletes)
+
+BATCH REMOVAL:
+Always pass phrase IDs as an array, even for a single phrase. This tool is optimized for batch operations.
+
+Single Phrase Examples:
+- User: "Remove phrase 123" → remove_phrases(["123"])
+- User: "Delete the word Krankenhaus" → First find ID, then remove_phrases([id])
+
+Batch Examples (Multiple Phrases):
+- User: "Delete phrases 1, 5, and 10" → remove_phrases(["1", "5", "10"])
+- User: "Remove all my weakest words" → get_vocabulary first, then remove_phrases([list of IDs])
+- User: "Delete the last 5 phrases I added" → get_vocabulary(sort_by="id", ascending=False, limit=5), then remove_phrases([ids])
+
+Important Notes:
+- ALWAYS pass an array of strings: ["42", "123"] not [42, 123]
+- IDs must be strings, not integers
+- Removal is permanent and cannot be undone
+- Tool handles non-existent IDs gracefully (reports them separately)
+- Removed phrases will not appear in future reviews or vocabulary lists
+""",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "phrase_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of phrase IDs (as strings) to remove. Examples: ['42'], ['1', '5', '10'], or even 100+ IDs.",
+                    }
+                },
+                "required": ["phrase_ids"],
                 "additionalProperties": False,
             },
         },

@@ -154,13 +154,13 @@ class PhrasesDB:
         return due_phrases
 
     def get_vocabulary(
-        self, limit: int = 100, sort_by: Literal["alphabetical", "mastery", "id"] = "id", ascending: bool = True
+        self, limit: int = 100, sort_by: Literal["alphabetical", "proficiency", "id"] = "id", ascending: bool = True
     ) -> list[dict[str, Any]]:
         """Get vocabulary with custom sorting and limit.
 
         Args:
             limit: Maximum number of phrases to return (default: 100, max: 2000)
-            sort_by: Sort order - "alphabetical", "mastery", or "id" (default: "id")
+            sort_by: Sort order - "alphabetical", "proficiency", or "id" (default: "id")
             ascending: Sort in ascending order if True, descending if False (default: True)
 
         Returns:
@@ -173,7 +173,7 @@ class PhrasesDB:
         def alphabetical_key(p: Phrase) -> str:
             return p.german.lower()
 
-        def mastery_key(p: Phrase) -> float:
+        def proficiency_key(p: Phrase) -> float:
             return p.ease_factor * p.interval_days
 
         def id_key(p: Phrase) -> int:
@@ -182,10 +182,36 @@ class PhrasesDB:
         key_func: Callable[[Phrase], Any]
         if sort_by == "alphabetical":
             key_func = alphabetical_key
-        elif sort_by == "mastery":
-            key_func = mastery_key
+        elif sort_by == "proficiency":
+            key_func = proficiency_key
         else:
             key_func = id_key
 
         sorted_phrases = sorted(phrases_list, key=key_func, reverse=not ascending)
         return [asdict(phrase) for phrase in sorted_phrases[:limit]]
+
+    def remove_phrases(self, phrase_ids: list[str]) -> tuple[list[str], list[str]]:
+        """Remove phrases by their IDs.
+
+        Args:
+            phrase_ids: List of phrase IDs to remove
+
+        Returns:
+            Tuple of (removed_ids, not_found_ids)
+        """
+        removed_ids = []
+        not_found_ids = []
+
+        for phrase_id in phrase_ids:
+            if phrase_id in self.phrases:
+                removed_ids.append(phrase_id)
+                del self.phrases[phrase_id]
+                logger.info(f"Removed phrase with ID {phrase_id}")
+            else:
+                not_found_ids.append(phrase_id)
+                logger.warning(f"Phrase with ID {phrase_id} not found")
+
+        if removed_ids:
+            self._save()
+
+        return removed_ids, not_found_ids
