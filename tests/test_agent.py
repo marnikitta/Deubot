@@ -89,8 +89,8 @@ def test_in_memory_db_persistence():
     """Test that in-memory database persists phrases correctly."""
     db = PhrasesDB()
 
-    phrase_id_1 = db.add_phrase("Guten Tag")
-    _ = db.add_phrase("Auf Wiedersehen")
+    phrase_id_1, _, _ = db.add_phrase("Guten Tag")
+    _, _, _ = db.add_phrase("Auf Wiedersehen")
 
     all_phrases = db.get_all_phrases()
     assert len(all_phrases) == 2

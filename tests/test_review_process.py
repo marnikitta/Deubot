@@ -84,7 +84,7 @@ def test_review_session_with_no_due_phrases(agent: GermanLearningAgent):
 def test_review_updates_database(agent: GermanLearningAgent):
     """Test that completing reviews updates the database correctly (simulating bot.py behavior)."""
     # Add phrase
-    phrase_id = agent.db.add_phrase("Auf Wiedersehen")
+    phrase_id, _, _ = agent.db.add_phrase("Auf Wiedersehen")
 
     # Get initial state
     initial_phrase = [p for p in agent.db.get_all_phrases() if p["id"] == phrase_id][0]
@@ -111,8 +111,8 @@ def test_review_updates_database(agent: GermanLearningAgent):
 def test_review_with_different_quality_ratings(agent: GermanLearningAgent):
     """Test that different quality ratings affect the review schedule (simulating bot.py behavior)."""
     # Add two phrases
-    phrase_id_1 = agent.db.add_phrase("Entschuldigung")
-    phrase_id_2 = agent.db.add_phrase("Bitte")
+    phrase_id_1, _, _ = agent.db.add_phrase("Entschuldigung")
+    phrase_id_2, _, _ = agent.db.add_phrase("Bitte")
 
     # Start review session - get batch
     outputs = list(agent.process_message("I want to start a review session"))

@@ -103,6 +103,7 @@ class GermanLearningAgent:
 
             if duplicate_phrases:
                 for user_phrase, existing_phrase in duplicate_phrases:
+                    assert existing_phrase is not None
                     if user_phrase.lower() == existing_phrase.lower():
                         user_message_parts.append(f"Already saved: <b>{escape_html(existing_phrase)}</b>")
                     else:
