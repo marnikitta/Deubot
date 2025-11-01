@@ -30,6 +30,11 @@ class ShowReviewOutput:
 
 
 @dataclass
+class ShowReviewBatchOutput:
+    reviews: list[ShowReviewOutput]
+
+
+@dataclass
 class LogOutput:
     message: str
 
@@ -39,7 +44,7 @@ class TypingOutput:
     pass
 
 
-UserOutput = MessageOutput | ShowReviewOutput | LogOutput | TypingOutput
+UserOutput = MessageOutput | ShowReviewOutput | ShowReviewBatchOutput | LogOutput | TypingOutput
 
 
 @dataclass
@@ -104,20 +109,21 @@ class GermanLearningAgent:
                 logger.info("No phrases due for review")
             return ToolCallResult(result=result, terminal=False, user_outputs=[])
 
-        elif tool_name == "show_review":
-            phrase_id = arguments["phrase_id"]
-            german = arguments["german"]
-            logger.info(f"Showing review for phrase '{german}' (ID: {phrase_id})")
+        elif tool_name == "show_review_batch":
+            reviews = arguments["reviews"]
+            review_outputs = [
+                ShowReviewOutput(
+                    phrase_id=r["phrase_id"],
+                    german=r["german"],
+                    explanation=r["explanation"],
+                )
+                for r in reviews
+            ]
+            logger.info(f"Showing batch of {len(reviews)} reviews")
             return ToolCallResult(
-                result="Review shown to user. Waiting for user rating.",
+                result=f"Batch of {len(reviews)} reviews sent to user. Bot will handle reviews locally and send 'All reviews completed' when finished.",
                 terminal=True,
-                user_outputs=[
-                    ShowReviewOutput(
-                        phrase_id=phrase_id,
-                        german=german,
-                        explanation=arguments["explanation"],
-                    )
-                ],
+                user_outputs=[ShowReviewBatchOutput(reviews=review_outputs)],
             )
 
         elif tool_name == "get_vocabulary":
@@ -178,7 +184,6 @@ class GermanLearningAgent:
 
         max_iterations = 10
         iterations = 0
-        review_shown_in_turn = False
 
         while response.status == "completed" and iterations < max_iterations:
             iterations += 1
@@ -207,33 +212,14 @@ class GermanLearningAgent:
 
                     # Handle user outputs from the tool
                     for user_output in tool_call_result.user_outputs:
-                        # Only show one review per turn
-                        if isinstance(user_output, ShowReviewOutput):
-                            if not review_shown_in_turn:
-                                yield user_output
-                                review_shown_in_turn = True
-                                if self.enable_logs:
-                                    yield LogOutput(message=f"Showing review for phrase ID: {user_output.phrase_id}")
-                            else:
-                                if self.enable_logs:
-                                    yield LogOutput(message="Additional review call skipped (only 1 per turn)")
-                        else:
-                            yield user_output
-
-                    # Determine result string to send back to LLM
-                    llm_result = tool_call_result.result
-                    if isinstance(tool_call_result.user_outputs, list) and any(
-                        isinstance(o, ShowReviewOutput) for o in tool_call_result.user_outputs
-                    ):
-                        if not review_shown_in_turn:
-                            llm_result = tool_call_result.result
-                        else:
-                            llm_result = (
-                                "Review NOT shown - only one review can be displayed per turn. This review was skipped."
-                            )
+                        yield user_output
 
                     input_list.append(
-                        {"type": "function_call_output", "call_id": output_item.call_id, "output": llm_result}
+                        {
+                            "type": "function_call_output",
+                            "call_id": output_item.call_id,
+                            "output": tool_call_result.result,
+                        }
                     )
 
                     # Only continue calling LLM for non-terminal tools

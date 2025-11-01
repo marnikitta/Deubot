@@ -9,6 +9,7 @@ from deubot.agent import (
     GermanLearningAgent,
     MessageOutput,
     ShowReviewOutput,
+    ShowReviewBatchOutput,
     LogOutput,
     TypingOutput,
     UserOutput,
@@ -42,6 +43,7 @@ class DeuBot:
         self.agent = agent
         self.last_reset: datetime | None = None
         self.review_state: dict = {}
+        self.review_cache: list[dict] = []
         self.debug_enabled: bool = False
 
     def _should_reset_daily(self) -> bool:
@@ -52,6 +54,7 @@ class DeuBot:
 
     def _clear_history(self) -> None:
         self.agent.clear_history()
+        self.review_cache = []
         self.last_reset = datetime.now()
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -94,11 +97,25 @@ class DeuBot:
             elif isinstance(output, MessageOutput):
                 if output.message:
                     await message.reply_text(output.message, parse_mode="HTML")
-            elif isinstance(output, ShowReviewOutput):
-                await self._show_review_card(message, output)
+            elif isinstance(output, ShowReviewBatchOutput):
+                await self._handle_review_batch(message, output)
             elif isinstance(output, LogOutput):
                 if output.message:
                     await message.reply_text(f"[{output.message}]")
+
+    async def _handle_review_batch(self, message, batch: ShowReviewBatchOutput) -> None:
+        """Cache batch of reviews and show first one."""
+        self.review_cache = [
+            {"phrase_id": r.phrase_id, "german": r.german, "explanation": r.explanation} for r in batch.reviews
+        ]
+        if self.review_cache:
+            first_review = self.review_cache.pop(0)
+            review_output = ShowReviewOutput(
+                phrase_id=first_review["phrase_id"],
+                german=first_review["german"],
+                explanation=first_review["explanation"],
+            )
+            await self._show_review_card(message, review_output)
 
     async def _show_review_card(self, message, review: ShowReviewOutput) -> None:
         self.review_state = {"phrase_id": review.phrase_id, "german": review.german, "explanation": review.explanation}
@@ -182,8 +199,17 @@ class DeuBot:
             logger.debug(f"Message not modified (duplicate quality rating): {e}")
 
         try:
-            outputs = self.agent.process_message(f"REVIEWED: {german} as {quality_name}")
-            await self._handle_outputs(query.message, outputs)
+            if self.review_cache:
+                next_review = self.review_cache.pop(0)
+                review_output = ShowReviewOutput(
+                    phrase_id=next_review["phrase_id"],
+                    german=next_review["german"],
+                    explanation=next_review["explanation"],
+                )
+                await self._show_review_card(query.message, review_output)
+            else:
+                outputs = self.agent.process_message("All reviews completed")
+                await self._handle_outputs(query.message, outputs)
         except Exception as e:
             await query.message.reply_text(f"Error: {str(e)}")
 
@@ -193,6 +219,10 @@ class DeuBot:
 
         user_text = update.message.text
         logger.info(f"Message received ({len(user_text)} chars)")
+
+        if self.review_cache:
+            logger.info("User interrupted review session, clearing review cache")
+            self.review_cache = []
 
         if self._should_reset_daily():
             self._clear_history()

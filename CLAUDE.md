@@ -16,6 +16,26 @@ uv run python -m deubot.main
 make run
 ```
 
+### Testing
+```bash
+# Run all tests in parallel (default: 10 workers)
+make test
+
+# Run all tests with custom worker count
+uv run pytest tests/ -n 10 -v
+
+# Run single test file
+uv run pytest tests/test_review_process.py -v
+
+# Run specific test (IMPORTANT: use this when fixing individual tests)
+uv run pytest tests/test_review_process.py::test_review_session_completes_when_no_phrases_left -v
+
+# Run tests matching a pattern
+uv run pytest tests/ -k "review" -v
+```
+
+**Testing Best Practice**: When fixing a specific test, ALWAYS run only that test for fast feedback. Running the full test suite should only be done after the specific test passes.
+
 ### Linting
 ```bash
 # Run all linters (mypy, black, flake8)
