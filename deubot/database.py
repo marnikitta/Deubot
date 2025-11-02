@@ -95,7 +95,12 @@ class PhrasesDB:
         if existing_phrase:
             return (existing_phrase.id, False, existing_phrase.german)
 
-        phrase_id = f"{len(self.phrases) + 1}"
+        # Generate new ID as max(existing) + 1
+        if self.phrases:
+            max_id = max(int(phrase_id) for phrase_id in self.phrases.keys())
+            phrase_id = f"{max_id + 1}"
+        else:
+            phrase_id = "1"
         now = datetime.now().isoformat()
         phrase = Phrase(
             id=phrase_id,
