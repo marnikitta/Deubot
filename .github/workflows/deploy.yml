@@ -1,0 +1,55 @@
+name: Deploy deubot
+concurrency: production
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint the project
+        run: make lint
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/deployment.key
+          chmod 600 ~/.ssh/deployment.key
+
+          # Add known host fingerprint for security
+          if [ -n "$SSH_HOST_KEY" ]; then
+            echo "$SSH_HOST_KEY" >> ~/.ssh/known_hosts
+          fi
+
+          cat >>~/.ssh/config <<END
+          Host deubot
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/deployment.key
+            StrictHostKeyChecking yes
+            Port ${SSH_PORT:-22}
+          END
+        env:
+          SSH_USER: ${{ secrets.DEPLOYMENT_SSH_USER }}
+          SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOYMENT_SSH_HOST }}
+          SSH_HOST_KEY: ${{ secrets.DEPLOYMENT_SSH_HOST_KEY }}
+          SSH_PORT: ${{ secrets.DEPLOYMENT_SSH_PORT }}
+
+      - name: Deploy
+        run: make deploy

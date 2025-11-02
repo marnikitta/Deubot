@@ -17,8 +17,8 @@
 Description=Deuch learning bot
 
 [Service]
-ExecStart=/home/alpinist/deubot/.venv/bin/python -m deubot.main
-WorkingDirectory=/home/alpinist/deubot
+ExecStart=/home/livecoding/deubot/.venv/bin/python -m deubot.main
+WorkingDirectory=/home/livecoding/deubot
 Restart=always
 Environment=PYTHONUNBUFFERED=1
 # notify type means that systemd will wait till notification from application that is successfully started
