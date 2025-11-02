@@ -7,6 +7,12 @@ service_name := deubot.service
 run:
 	uv run python -m $(package).main
 
+test-unit:
+	uv run pytest tests/ -m unit -v --tb=short
+
+test-llm:
+	uv run pytest tests/ -m llm -n 20 -v --tb=short
+
 test:
 	uv run pytest tests/ -n 20 -v --tb=short
 
@@ -15,7 +21,7 @@ lint:
 	uv run black --line-length 120 $(package) tests
 	uv run flake8 --ignore E501,W503,E203 $(package) tests
 
-push: lint
+push: lint test-unit
 	ssh $(host) "mkdir -p $(remote_path)"
 	rsync --delete --verbose --archive --compress --rsh=ssh $(deploy_files) $(host):$(remote_path)
 
@@ -34,6 +40,6 @@ remote-stop:
 	ssh -T $(host) "systemctl --user status $(service_name) --no-pager || true"
 
 
-.PHONY: run test lint push install deploy remote-stop
+.PHONY: run test test-unit test-llm lint push install deploy remote-stop
 
 

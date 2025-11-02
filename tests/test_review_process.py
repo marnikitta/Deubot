@@ -1,6 +1,10 @@
 """Tests for the review process with spaced repetition."""
 
+import pytest
+
 from deubot.agent import GermanLearningAgent, ShowReviewBatchOutput, MessageOutput
+
+pytestmark = pytest.mark.llm
 
 
 def test_review_session_with_multiple_phrases(agent: GermanLearningAgent):

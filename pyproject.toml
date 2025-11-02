@@ -17,3 +17,9 @@ dev-dependencies = [
     "pytest>=8.0",
     "pytest-xdist>=3.0",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "unit: Fast unit tests that don't require LLM API calls",
+    "llm: Integration tests that require OpenAI API calls (slow, use -n 20)",
+]

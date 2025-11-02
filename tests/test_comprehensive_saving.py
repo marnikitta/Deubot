@@ -5,6 +5,8 @@ import pytest
 from deubot.agent import GermanLearningAgent
 from deubot.database import PhrasesDB
 
+pytestmark = pytest.mark.llm
+
 
 # Test cases: (message, should_save, description)
 # Reduced to key scenarios to speed up tests

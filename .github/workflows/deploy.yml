@@ -1,11 +1,9 @@
-name: Deploy deubot
+name: Test and Deploy
 concurrency: production
 on:
   push:
-    branches:
-      - main
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -24,6 +22,28 @@ jobs:
 
       - name: Lint the project
         run: make lint
+
+      - name: Run unit tests
+        run: make test-unit
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync
 
       - name: Configure SSH
         run: |

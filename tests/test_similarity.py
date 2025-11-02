@@ -5,6 +5,8 @@ import pytest
 
 from deubot.database import PhrasesDB
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def temp_db():

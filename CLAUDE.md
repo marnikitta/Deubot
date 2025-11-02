@@ -18,11 +18,14 @@ make run
 
 ### Testing
 ```bash
-# Run all tests in parallel (ALWAYS use -n flag for parallel execution)
-make test
+# Run unit tests only (fast, < 1 second, runs before push/deploy)
+make test-unit
 
-# Run all tests with custom worker count (recommended: 20 workers for LLM tests)
-uv run pytest tests/ -n 20 -v
+# Run LLM integration tests only (slow, 30-50 seconds per test, run ad-hoc)
+make test-llm
+
+# Run all tests in parallel
+make test
 
 # Run single test file
 uv run pytest tests/test_review_process.py -v
@@ -30,14 +33,22 @@ uv run pytest tests/test_review_process.py -v
 # Run specific test (IMPORTANT: use this when fixing individual tests)
 uv run pytest tests/test_review_process.py::test_review_session_completes_when_no_phrases_left -v
 
-# Run tests matching a pattern
-uv run pytest tests/ -k "review" -v
+# Run tests by marker
+uv run pytest tests/ -m unit -v          # Fast unit tests only
+uv run pytest tests/ -m llm -n 20 -v     # LLM tests only with parallelization
 ```
 
+**Test Organization**:
+Tests are categorized using pytest markers:
+- **@pytest.mark.unit**: Fast unit tests (database, SM-2 algorithm, similarity detection) that don't require LLM API calls
+- **@pytest.mark.llm**: Integration tests that make actual OpenAI API calls and require parallel execution (-n 20)
+
 **Testing Best Practice**:
-- ALWAYS run tests in parallel with `-n 20` flag since LLM-related tests are very slow (30-50 seconds per test)
+- Run `make test-unit` during development for fast feedback (< 1 second)
+- Run `make test-llm` only when changing prompts or agent behavior (slow, requires API key)
+- CI runs unit tests on all branches; LLM tests should be run manually
 - When fixing a specific test, ALWAYS run only that test for fast feedback
-- Running the full test suite should only be done after the specific test passes
+- LLM tests MUST use `-n 20` flag for parallel execution to manage 30-50 second per-test latency
 
 ### Linting
 ```bash
@@ -52,7 +63,7 @@ uv run flake8 --ignore E501,W503,E203 deubot
 
 ### Deployment
 ```bash
-# Push code to remote host (runs lint first)
+# Push code to remote host (runs lint and unit tests first)
 make push
 
 # Deploy and restart service (runs push, then restarts systemd service)
@@ -60,6 +71,14 @@ make deploy
 ```
 
 The default deployment host is `deubot`, configured in the Makefile. Change `host := deubot` to deploy elsewhere.
+
+**Deployment Flow**:
+1. Unit tests are run (< 1 second)
+2. Code is linted
+3. Files are synced to remote host via rsync
+4. Systemd daemon is reloaded
+5. Service is restarted
+6. Last 20 log lines are displayed
 
 ## Architecture
 
@@ -91,13 +110,6 @@ The service is configured to:
 - Run with PYTHONUNBUFFERED=1 for immediate log output
 - Use systemd Type=notify for proper startup synchronization
 
-### Deployment Flow
-
-1. Code is linted locally
-2. Files (deubot.service, deubot/, pyproject.toml) are synced to remote host via rsync
-3. Systemd daemon is reloaded
-4. Service is restarted
-5. Last 20 log lines are displayed
 
 ## Project Structure
 

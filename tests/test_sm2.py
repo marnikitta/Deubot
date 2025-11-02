@@ -2,7 +2,11 @@
 
 from datetime import datetime, timedelta
 
+import pytest
+
 from deubot.database import PhrasesDB
+
+pytestmark = pytest.mark.unit
 
 
 def test_new_phrase_starts_with_correct_defaults():

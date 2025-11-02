@@ -5,6 +5,8 @@ import pytest
 from deubot.agent import GermanLearningAgent, MessageOutput
 from deubot.database import PhrasesDB
 
+pytestmark = pytest.mark.llm
+
 
 def test_phrase_saving_basic(agent: GermanLearningAgent, test_db: PhrasesDB):
     """Test that a simple translation request saves a phrase."""

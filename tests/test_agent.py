@@ -1,7 +1,11 @@
 """Tests for the GermanLearningAgent."""
 
+import pytest
+
 from deubot.agent import GermanLearningAgent
 from deubot.database import PhrasesDB
+
+pytestmark = pytest.mark.llm
 
 
 def test_simple_translation(agent: GermanLearningAgent):
