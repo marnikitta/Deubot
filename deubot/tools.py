@@ -36,21 +36,31 @@ Usage Pattern:
 DO NOT call for grammar questions, general explanations, or language concepts.
 DO NOT call when user explicitly asks not to save.
 
-Article Handling:
-German nouns need their articles to be useful for learning. When saving:
-- User sends "Gleis" → save as "das Gleis" (add the article)
-- User sends "Hund" → save as "der Hund" (add the article)
-- User sends "Katze" → save as "die Katze" (add the article)
+Article Handling - CRITICAL FOR GERMAN NOUNS:
+German nouns MUST be saved with their articles (der/die/das) - this is non-negotiable for effective learning.
+When saving nouns:
+- User sends "Gleis" → save as "das Gleis" (detect it's a noun, add the article)
+- User sends "Hund" → save as "der Hund" (detect it's a noun, add the article)
+- User sends "Katze" → save as "die Katze" (detect it's a noun, add the article)
+- User sends "Datenschutz" → save as "der Datenschutz" (detect it's a noun, add the article)
+- User sends "Krankenhaus" → save as "das Krankenhaus" (detect it's a noun, add the article)
 - User sends "der Tisch" → save as "der Tisch" (article already present)
-- Non-nouns like "Hallo", "Guten Morgen" → save as-is (no article needed)
+- Non-nouns like "Hallo", "Guten Morgen", "schnell" → save as-is (no article needed)
+
+HOW TO DETECT NOUNS:
+- Capitalized words in German are almost always nouns (Hund, Katze, Datenschutz, Gleis)
+- Compound words with capital letters are nouns (Krankenhaus, Regenschirm, Datenschutz)
+- If unsure whether it's a noun, add the article - it's better to have it than not
+- Only skip articles for: greetings (Hallo, Guten Morgen), verbs, adjectives, adverbs, phrases
 
 BATCH SAVING:
 Always pass phrases as an array, even for a single phrase. This tool is optimized for batch operations.
 
 Single Phrase Examples:
 - User: "How do you say umbrella?" → save_phrases(["der Regenschirm"]) then respond
-- User: "What does Krankenhaus mean?" → save_phrases(["Krankenhaus"]) then explain
-- User: "Guten Abend" → save_phrases(["Guten Abend"]) then translate
+- User: "What does Krankenhaus mean?" → save_phrases(["das Krankenhaus"]) then explain (add article!)
+- User: "Datenschutz" → save_phrases(["der Datenschutz"]) then translate (add article!)
+- User: "Guten Abend" → save_phrases(["Guten Abend"]) then translate (greeting, no article)
 - User: "Translate 'the book' to German" → save_phrases(["das Buch"]) then respond
 
 Batch Examples (Multiple Phrases):
@@ -73,12 +83,24 @@ When NOT to Use:
 
 Tool Calling Pattern:
 
-RIGHT - Call tool immediately:
+RIGHT - Call tool immediately with article:
+User: Datenschutz
+Assistant: [calls save_phrases(["der Datenschutz"])]  ← ARTICLE ADDED!
+Assistant: <b>Data protection / privacy</b>
+
+Datenschutz is a masculine noun referring to...
+
+RIGHT - Call tool for noun with article:
 User: Notruf
-Assistant: [calls save_phrases(["Notruf"])]
+Assistant: [calls save_phrases(["der Notruf"])]  ← ARTICLE ADDED!
 Assistant: <b>Emergency call</b>
 
 Notruf refers to an emergency phone call...
+
+WRONG - Saving noun without article:
+User: Datenschutz
+Assistant: [calls save_phrases(["Datenschutz"])]  ← MISSING ARTICLE!
+[This is a critical error - nouns must have articles]
 
 WRONG - Announcing intent first:
 User: Notruf

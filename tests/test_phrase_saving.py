@@ -126,3 +126,77 @@ def test_various_translation_formats(
     assert any(
         expected_german.lower() in phrase.lower() for phrase in saved_phrases
     ), f"Expected '{expected_german}' in saved phrases, got: {saved_phrases}"
+
+
+@pytest.mark.parametrize(
+    "test_message,expected_article,expected_noun",
+    [
+        ("Datenschutz", "der", "Datenschutz"),
+        ("Krankenhaus", "das", "Krankenhaus"),
+        ("Katze", "die", "Katze"),
+        ("Regenschirm", "der", "Regenschirm"),
+    ],
+)
+def test_noun_saved_with_article(
+    agent: GermanLearningAgent, test_db: PhrasesDB, test_message: str, expected_article: str, expected_noun: str
+):
+    """Test that when user sends a bare German noun, it gets saved with its article."""
+    # Arrange
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act - user sends just the noun
+    outputs = list(agent.process_message(test_message))
+
+    # Assert - phrase was saved
+    final_count = len(test_db.get_all_phrases())
+    assert final_count > initial_count, f"Phrase was not saved for: {test_message}"
+
+    # Check the saved phrase includes the article
+    all_phrases = test_db.get_all_phrases()
+    saved_phrases = [p["german"] for p in all_phrases]
+
+    # The saved phrase should contain both article and noun
+    expected_with_article = f"{expected_article} {expected_noun}"
+    assert any(
+        expected_with_article.lower() == phrase.lower() for phrase in saved_phrases
+    ), f"Expected '{expected_with_article}' to be saved, got: {saved_phrases}"
+
+    # Verify confirmation message also shows the article
+    message_outputs = [o for o in outputs if isinstance(o, MessageOutput)]
+    confirmation_messages = [m.message for m in message_outputs if "✓ Saved:" in m.message]
+
+    assert len(confirmation_messages) > 0, "No confirmation message found"
+    # Check that the confirmation shows the article
+    assert (
+        expected_article in confirmation_messages[0] and expected_noun in confirmation_messages[0]
+    ), f"Expected confirmation to show '{expected_with_article}', got: {confirmation_messages[0]}"
+
+
+def test_greeting_saved_without_article(agent: GermanLearningAgent, test_db: PhrasesDB):
+    """Test that greetings are saved without articles (as they are not nouns)."""
+    # Arrange
+    test_message = "Guten Morgen"
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act
+    _ = list(agent.process_message(test_message))
+
+    # Assert
+    final_count = len(test_db.get_all_phrases())
+    assert final_count > initial_count, "Phrase was not saved"
+
+    # Check that "Guten Morgen" was saved without an article prefix
+    all_phrases = test_db.get_all_phrases()
+    saved_phrases = [p["german"] for p in all_phrases]
+
+    # Should find "Guten Morgen" exactly (possibly with case variations)
+    assert any(
+        "guten morgen" == phrase.lower() for phrase in saved_phrases
+    ), f"Expected 'Guten Morgen' without article, got: {saved_phrases}"
+
+    # Should NOT have "der Guten Morgen" or similar
+    assert not any(
+        phrase.lower().startswith("der ") or phrase.lower().startswith("die ") or phrase.lower().startswith("das ")
+        for phrase in saved_phrases
+        if "guten morgen" in phrase.lower()
+    ), f"Greeting should not have article, got: {saved_phrases}"
