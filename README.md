@@ -1,5 +1,7 @@
 # DeuBot
 
+![DeuBot Demo](demo.png)
+
 **Primary goal**: Explore capabilities and limitations of coding with AI coding assistants (Claude Code, Cursor, etc.) rather than build production-ready software.
 
 *This README was written by an AI coding assistant.*
