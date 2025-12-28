@@ -18,7 +18,7 @@ Rules:
 - Keep it dense – this is a flashcard, not a lecture
 - For compound words, show the subwords
 - Provide 2 example sentences with translations
-- Grammar section: plural, gender forms, or other relevant notes (case usage, irregular forms, etc.)
+- Grammar section: plural, gender forms, or other relevant notes (case usage, irregular forms, etc.). Keep it short
 
 Follow this exact format (example for "das Handtuch"):
 <b>towel</b>
@@ -50,7 +50,7 @@ class TranslationCard:
 
 
 class TranslationService:
-    def __init__(self, client: OpenAI, model: str, num_workers: int = 10):
+    def __init__(self, client: OpenAI, model: str, num_workers: int = 20):
         self.client = client
         self.model = model
         self._cache: dict[str, str] = {}
