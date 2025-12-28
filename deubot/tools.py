@@ -130,101 +130,35 @@ Important Notes:
         },
         {
             "type": "function",
-            "name": "get_next_due_phrases",
-            "description": """Retrieve the next batch of German phrases that need spaced repetition review.
+            "name": "start_review",
+            "description": """Start a spaced repetition review session.
 
-CRITICAL: Call ONLY when starting a review session OR when you receive "All reviews completed" message.
-After calling this, you MUST immediately call show_review_batch with ALL phrases from this batch.
+Call this tool when the user wants to practice their vocabulary.
 
-When to Use:
-- User starts review: "/review", "let's practice", "time to review"
-- You receive: "All reviews completed" message (fetch next batch)
+Triggers:
+- "/review", "review", "let's practice", "practice", "quiz me"
+- Any request to test or review saved vocabulary
+
+Behavior:
+1. Fetches up to 10 phrases due for review from the database
+2. Generates translation cards for each phrase automatically
+3. Presents cards one by one to the user
+4. User rates each card; bot handles the review flow locally
+5. When batch completes, user can start another session
+
+CRITICAL: After calling this tool, STOP and WAIT.
+The bot handles all review interactions locally without further agent involvement.
 
 When NOT to Use:
-- During active review (bot is handling the batch locally)
-- User asks to see vocabulary → use get_vocabulary instead
-
-Technical Notes:
-- Default limit: 10, maximum: 100
-- Returns earliest scheduled phrases if none currently due
-- Return format: "- ID: {id}, German: {german}"
+- User asks to see vocabulary list → use get_vocabulary instead
+- User wants to save new phrases → use save_phrases instead
+- User asks about grammar → respond directly
 """,
             "strict": True,
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of phrases to return. Default: 10 (optimal batch size). Maximum: 100 (enforced). Use 10 unless user explicitly requests different amount.",
-                    }
-                },
-                "required": ["limit"],
-                "additionalProperties": False,
-            },
-        },
-        {
-            "type": "function",
-            "name": "show_review_batch",
-            "description": """Send a batch of interactive review cards to the user for spaced repetition testing.
-
-CRITICAL: After calling this tool, STOP and WAIT. Bot handles all reviews locally.
-You will receive "All reviews completed" when user finishes the batch - then fetch next batch.
-
-Usage Flow:
-1. Call get_next_due_phrases to fetch batch
-2. Prepare explanations for ALL phrases
-3. Call show_review_batch ONCE with entire batch
-4. STOP - bot displays cards one by one as user rates them
-5. When you receive "All reviews completed", fetch next batch
-
-Explanation Format (for each phrase):
-<b>[English translation]</b>
-
-<b>Pronunciation:</b>
-IPA: [formal IPA transcription]
-Approx: [English approximation, e.g., "KROH-ah-sahnt"]
-
-One-two sentences of clear context and usage.
-
-<b>Usage:</b>
-- Bullet points for where/when to use
-
-<b>Examples:</b>
-1. [German] – [English]
-2. [German] – [English]
-
-<b>Grammar note:</b>
-One short, definitive point if relevant.
-""",
-            "strict": True,
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "reviews": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "phrase_id": {
-                                    "type": "string",
-                                    "description": "The ID of the phrase being reviewed, obtained from get_next_due_phrases. Example: '42'",
-                                },
-                                "german": {
-                                    "type": "string",
-                                    "description": "The German phrase to display on the card, exactly as stored in database. Example: 'Guten Morgen'",
-                                },
-                                "explanation": {
-                                    "type": "string",
-                                    "description": "Comprehensive English explanation in HTML format. Include: <b>translation</b>, <b>Pronunciation</b> (IPA and English approximation), context, usage points, 2-3 examples with translations, and grammar notes. Use HTML tags: <b> for bold, <i> for italic.",
-                                },
-                            },
-                            "required": ["phrase_id", "german", "explanation"],
-                            "additionalProperties": False,
-                        },
-                        "description": "Array of review cards to display. Each card contains phrase_id, german text, and explanation. Typically contains 10 cards (one batch).",
-                    }
-                },
-                "required": ["reviews"],
+                "properties": {},
+                "required": [],
                 "additionalProperties": False,
             },
         },

@@ -18,11 +18,12 @@ def openai_credentials() -> dict[str, str]:
 
     api_key = os.getenv("OPENAI_API_KEY")
     model = os.getenv("OPENAI_MODEL", "gpt-5")
+    light_model = os.getenv("OPENAI_LIGHT_MODEL", "gpt-5-nano")
 
     if not api_key:
         pytest.skip("OPENAI_API_KEY not set in .env")
 
-    return {"api_key": api_key, "model": model}
+    return {"api_key": api_key, "model": model, "light_model": light_model}
 
 
 @pytest.fixture
@@ -39,6 +40,7 @@ def agent(openai_credentials: dict[str, str], test_db: PhrasesDB) -> GermanLearn
     return GermanLearningAgent(
         api_key=openai_credentials["api_key"],
         model=openai_credentials["model"],
+        light_model=openai_credentials["light_model"],
         db=test_db,
         enable_logs=True,
     )
@@ -50,6 +52,7 @@ def agent_no_logs(openai_credentials: dict[str, str], test_db: PhrasesDB) -> Ger
     return GermanLearningAgent(
         api_key=openai_credentials["api_key"],
         model=openai_credentials["model"],
+        light_model=openai_credentials["light_model"],
         db=test_db,
         enable_logs=False,
     )

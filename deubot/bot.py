@@ -8,13 +8,13 @@ from telegram.error import BadRequest
 from deubot.agent import (
     GermanLearningAgent,
     MessageOutput,
-    ShowReviewOutput,
     ShowReviewBatchOutput,
     LogOutput,
     TypingOutput,
     UserOutput,
     escape_html,
 )
+from deubot.review_session import ReviewSession, ReviewCard
 from deubot.systemd import notify_systemd
 
 logger = logging.getLogger(__name__)
@@ -42,8 +42,7 @@ class DeuBot:
         self.allowed_user_id = allowed_user_id
         self.agent = agent
         self.last_reset: datetime | None = None
-        self.review_state: dict = {}
-        self.review_cache: list[dict] = []
+        self.review_session = ReviewSession(agent.db)
         self.debug_enabled: bool = False
 
     def _should_reset_daily(self) -> bool:
@@ -54,7 +53,7 @@ class DeuBot:
 
     def _clear_history(self) -> None:
         self.agent.clear_history()
-        self.review_cache = []
+        self.review_session.interrupt()
         self.last_reset = datetime.now()
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -104,26 +103,16 @@ class DeuBot:
                     await message.reply_text(f"[{output.message}]")
 
     async def _handle_review_batch(self, message, batch: ShowReviewBatchOutput) -> None:
-        """Cache batch of reviews and show first one."""
-        self.review_cache = [
-            {"phrase_id": r.phrase_id, "german": r.german, "explanation": r.explanation} for r in batch.reviews
-        ]
-        if self.review_cache:
-            first_review = self.review_cache.pop(0)
-            review_output = ShowReviewOutput(
-                phrase_id=first_review["phrase_id"],
-                german=first_review["german"],
-                explanation=first_review["explanation"],
-            )
-            await self._show_review_card(message, review_output)
+        """Start batch session and show first card."""
+        first_card = self.review_session.start_batch(batch)
+        if first_card:
+            await self._show_review_card(message, first_card)
 
-    async def _show_review_card(self, message, review: ShowReviewOutput) -> None:
-        self.review_state = {"phrase_id": review.phrase_id, "german": review.german, "explanation": review.explanation}
-
-        keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{review.phrase_id}")]]
+    async def _show_review_card(self, message, card: ReviewCard) -> None:
+        keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{card.phrase_id}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{escape_html(review.german)}</b>\n\n<i>Was bedeutet das? / What does this mean?</i>"
+        text = f"<b>{escape_html(card.german)}</b>\n\n<i>Was bedeutet das? / What does this mean?</i>"
         await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -149,11 +138,9 @@ class DeuBot:
             await self._handle_quality(query, phrase_id, quality)
 
     async def _handle_reveal(self, query, phrase_id: str) -> None:
-        if not self.review_state or self.review_state["phrase_id"] != phrase_id:
+        card = self.review_session.current_card
+        if not card or card.phrase_id != phrase_id:
             return
-
-        german = self.review_state["german"]
-        explanation = self.review_state["explanation"]
 
         keyboard = [
             [
@@ -167,7 +154,7 @@ class DeuBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{escape_html(german)}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
+        text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
         try:
             await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
         except BadRequest as e:
@@ -176,19 +163,17 @@ class DeuBot:
             logger.debug(f"Message not modified (duplicate reveal click): {e}")
 
     async def _handle_quality(self, query, phrase_id: str, quality: int) -> None:
-        if not self.review_state or self.review_state["phrase_id"] != phrase_id:
+        card = self.review_session.current_card
+        if not card or card.phrase_id != phrase_id:
             return
 
-        german = self.review_state["german"]
-        explanation = self.review_state["explanation"]
         quality_names = {1: "Nochmal / Again", 2: "Schwer / Hard", 3: "Gut / Good", 4: "Leicht / Easy"}
         quality_name = quality_names.get(quality, "")
 
-        self.agent.db.update_review(phrase_id, quality)
-        self.review_state = {}
+        self.review_session.record_quality(phrase_id, quality)
 
         try:
-            text = f"<b>{escape_html(german)}</b>\n\n{explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
+            text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             await query.edit_message_text(
                 text,
                 parse_mode="HTML",
@@ -199,17 +184,17 @@ class DeuBot:
             logger.debug(f"Message not modified (duplicate quality rating): {e}")
 
         try:
-            if self.review_cache:
-                next_review = self.review_cache.pop(0)
-                review_output = ShowReviewOutput(
-                    phrase_id=next_review["phrase_id"],
-                    german=next_review["german"],
-                    explanation=next_review["explanation"],
-                )
-                await self._show_review_card(query.message, review_output)
+            next_card = self.review_session.advance()
+            if next_card:
+                await self._show_review_card(query.message, next_card)
             else:
-                outputs = self.agent.process_message("All reviews completed")
-                await self._handle_outputs(query.message, outputs)
+                await query.message.reply_text(
+                    "Alle Karten geprüft! Gut gemacht!\n"
+                    "<i>All cards reviewed! Well done!</i>\n\n"
+                    "Sage /review um eine weitere Sitzung zu starten.\n"
+                    "<i>Say /review to start another session.</i>",
+                    parse_mode="HTML",
+                )
         except Exception as e:
             await query.message.reply_text(f"Error: {str(e)}")
 
@@ -220,9 +205,9 @@ class DeuBot:
         user_text = update.message.text
         logger.info(f"Message received ({len(user_text)} chars)")
 
-        if self.review_cache:
-            logger.info("User interrupted review session, clearing review cache")
-            self.review_cache = []
+        if self.review_session.is_active:
+            logger.info("User interrupted review session, clearing review session")
+            self.review_session.interrupt()
 
         if self._should_reset_daily():
             self._clear_history()

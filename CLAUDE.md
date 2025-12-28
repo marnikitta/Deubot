@@ -31,7 +31,7 @@ make test
 uv run pytest tests/test_review_process.py -v
 
 # Run specific test (IMPORTANT: use this when fixing individual tests)
-uv run pytest tests/test_review_process.py::test_review_session_completes_when_no_phrases_left -v
+uv run pytest tests/test_review_process.py::test_review_session_with_multiple_phrases -v
 
 # Run tests by marker
 uv run pytest tests/ -m unit -v          # Fast unit tests only
@@ -87,6 +87,7 @@ The default deployment host is `deubot`, configured in the Makefile. Change `hos
 - **main.py**: Application entry point with `main()` function
 - **agent.py**: AI agent with OpenAI integration, tool calling, and typed output system
 - **tools.py**: Tool definitions with elaborate descriptions, usage patterns, and examples following Claude Code's documentation philosophy
+- **translations.py**: Translation card generation with parallel LLM calls and in-memory caching for spaced repetition reviews
 - **bot.py**: Telegram bot handler with message routing and user interaction
 - **database.py**: JSON-based phrase storage with spaced repetition (SM-2 algorithm)
 - **dotenv.py**: Custom .env file parser that loads environment variables from a `.env` file, supporting quoted and unquoted values

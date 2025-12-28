@@ -32,40 +32,6 @@ def test_review_session_with_multiple_phrases(agent: GermanLearningAgent):
         assert len(review.explanation) > 0
 
 
-def test_review_session_completes_when_no_phrases_left(agent: GermanLearningAgent):
-    """Test that review session continues fetching batches until agent acknowledges completion."""
-    # Add multiple phrases to make this more realistic
-    agent.db.add_phrase("Guten Tag")
-    agent.db.add_phrase("Guten Morgen")
-    agent.db.add_phrase("Guten Abend")
-
-    # Start review session - agent sends batch
-    outputs = list(agent.process_message("I want to start a review session"))
-    batch_outputs = [o for o in outputs if isinstance(o, ShowReviewBatchOutput)]
-
-    assert len(batch_outputs) == 1
-    batch = batch_outputs[0]
-    assert len(batch.reviews) == 3
-
-    # Simulate bot.py completing all reviews in the batch by updating database
-    for review in batch.reviews:
-        agent.db.update_review(review.phrase_id, quality=3)
-
-    # Bot sends "All reviews completed" after user finishes the batch
-    outputs = list(agent.process_message("All reviews completed"))
-
-    # Agent will check for next batch. Since these are the only phrases, they'll be
-    # returned as "earliest scheduled" even though not currently due.
-    # This is expected behavior - get_due_phrases() returns earliest if none are due.
-    batch_outputs = [o for o in outputs if isinstance(o, ShowReviewBatchOutput)]
-    message_outputs = [o for o in outputs if isinstance(o, MessageOutput)]
-
-    # Either gets another batch (same phrases rescheduled) or completion message
-    # Both are valid depending on agent's interpretation
-    assert len(batch_outputs) >= 0  # May or may not get another batch
-    assert len(message_outputs) >= 0  # May or may not get message
-
-
 def test_review_session_with_no_due_phrases(agent: GermanLearningAgent):
     """Test review session when there are no phrases due for review."""
     # Don't add any phrases
@@ -107,9 +73,6 @@ def test_review_updates_database(agent: GermanLearningAgent):
     updated_phrase = [p for p in agent.db.get_all_phrases() if p["id"] == phrase_id][0]
     assert updated_phrase["interval_days"] > initial_interval
     assert updated_phrase["next_review"] > initial_phrase["next_review"]
-
-    # Bot sends "All reviews completed" after user finishes
-    outputs = list(agent.process_message("All reviews completed"))
 
 
 def test_review_with_different_quality_ratings(agent: GermanLearningAgent):
