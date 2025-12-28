@@ -172,7 +172,7 @@ class TestLLMIntegration:
             {"id": "3", "german": "Bitte"},
         ]
 
-        cards = translation_service.get_translation_cards_parallel(phrases, max_workers=3)
+        cards = translation_service.get_translation_cards_parallel(phrases)
 
         assert len(cards) == 3
         for card, phrase in zip(cards, phrases):

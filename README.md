@@ -14,7 +14,7 @@ A German learning Telegram bot with spaced repetition. Built iteratively with Cl
 
 **Agent architecture**: OpenAI integration with structured tool calling. Tools have elaborate descriptions following Claude Code's documentation philosophy (see [Decoding Claude Code](https://minusx.ai/blog/decoding-claude-code/)). Agent returns typed outputs using dataclasses, not magic strings.
 
-**Spaced repetition**: SM-2 algorithm with JSON persistence. Quality ratings (1-5) adjust ease factors and intervals for optimal review scheduling.
+**Spaced repetition**: SM-2 algorithm with gzip-compressed JSON persistence. Quality ratings (1-4: Again, Hard, Good, Easy) adjust ease factors and intervals. Duplicate detection uses trigram similarity.
 
 **Deployment**: Systemd service with Type=notify protocol for proper startup signaling. Deployed via rsync to remote host.
 
@@ -22,11 +22,11 @@ A German learning Telegram bot with spaced repetition. Built iteratively with Cl
 
 ## Testing & Development
 
-Integrated into development cycle:
-- **Linting**: mypy, black (120 chars), flake8
-- **LLM tests**: Validate tool usage patterns and agent behavior probabilistically (semantic correctness, not exact matches)
-- **Logic tests**: SM-2 algorithm correctness
-- **End-to-end tests**: Resilient to LLM non-determinism
+Tests use pytest markers:
+- **Unit tests** (`@pytest.mark.unit`): Fast tests for SM-2 algorithm, database, similarity detection (< 1 second)
+- **LLM tests** (`@pytest.mark.llm`): Integration tests with actual OpenAI API calls, run in parallel with `-n 20`
+
+LLM tests validate behavior patterns and semantic correctness, not exact string matches.
 
 ```bash
 make lint   # Run all linters
@@ -36,10 +36,13 @@ make deploy # Deploy to remote systemd service
 
 ## Structure
 
-`deubot/agent.py` - AI agent with tool calling
+`deubot/main.py` - Application entry point
+`deubot/agent.py` - AI agent with tool calling and typed outputs
 `deubot/tools.py` - Tool definitions with detailed documentation
-`deubot/bot.py` - Telegram handler
-`deubot/database.py` - SM-2 spaced repetition storage
+`deubot/translations.py` - Parallel LLM translation card generation with caching
+`deubot/review_session.py` - Review session state machine
+`deubot/bot.py` - Telegram handler with callback queries for reviews
+`deubot/database.py` - SM-2 spaced repetition storage with duplicate detection
 `deubot/systemd.py` - Type=notify service integration
 
 Configuration via `.env` file (see `.env.example`).

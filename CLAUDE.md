@@ -85,19 +85,31 @@ The default deployment host is `deubot`, configured in the Makefile. Change `hos
 ### Core Modules
 
 - **main.py**: Application entry point with `main()` function
-- **agent.py**: AI agent with OpenAI integration, tool calling, and typed output system
+- **agent.py**: AI agent with OpenAI integration, tool calling, and typed output system (dataclasses like `MessageOutput`, `ShowReviewBatchOutput`, `ToolCallResult`)
 - **tools.py**: Tool definitions with elaborate descriptions, usage patterns, and examples following Claude Code's documentation philosophy
-- **translations.py**: Translation card generation with parallel LLM calls and in-memory caching for spaced repetition reviews
-- **bot.py**: Telegram bot handler with message routing and user interaction
-- **database.py**: JSON-based phrase storage with spaced repetition (SM-2 algorithm)
+- **translations.py**: Translation card generation with parallel LLM calls (ThreadPoolExecutor) and in-memory caching for spaced repetition reviews
+- **review_session.py**: Review session state machine managing card queue, current card state, and quality recording
+- **bot.py**: Telegram bot handler with message routing, callback query handling for review buttons, and user interaction
+- **database.py**: Gzip-compressed JSON-based phrase storage with SM-2 spaced repetition and trigram similarity detection for duplicates
 - **dotenv.py**: Custom .env file parser that loads environment variables from a `.env` file, supporting quoted and unquoted values
 - **systemd.py**: Systemd integration using Type=notify protocol to signal service readiness via NOTIFY_SOCKET
+- **system_prompt.md**: Agent system prompt defining behavior, language routing rules, and tool usage guidelines
 
 **Agent Design Reference**: For principles of good agent design and tool calling patterns, see [Decoding Claude Code](https://minusx.ai/blog/decoding-claude-code/)
 
 ### Database & Spaced Repetition
 
-SM-2 based spaced repetition with JSON persistence. Quality ratings adjust ease factors and intervals for optimal review scheduling.
+SM-2 based spaced repetition with gzip-compressed JSON persistence. Quality ratings (1-4: Again, Hard, Good, Easy) adjust ease factors and intervals for optimal review scheduling. Duplicate detection uses trigram similarity with 85% threshold and article normalization.
+
+### Review Workflow
+
+1. User requests review → Agent calls `start_review` tool
+2. `PhrasesDB.get_due_phrases()` fetches phrases due for review
+3. `TranslationService.get_translation_cards_parallel()` generates cards via parallel LLM calls
+4. Bot displays first card with "Reveal" button
+5. User clicks Reveal → Shows translation and 4 quality rating buttons
+6. User rates → `ReviewSession.record_quality()` updates SM-2 data
+7. Next card shown until batch complete
 
 ### Systemd Service Integration
 
@@ -112,10 +124,20 @@ The service is configured to:
 - Use systemd Type=notify for proper startup synchronization
 
 
+## Environment Variables
+
+Configuration via `.env` file (see `.env.example`):
+- `TELEGRAM_BOT_TOKEN`: Telegram Bot API token
+- `ALLOWED_USER_ID`: Single authorized user ID for authentication
+- `OPENAI_API_KEY`: OpenAI API key
+- `OPENAI_MODEL`: Main model for agent (default: `gpt-4o`)
+- `OPENAI_LIGHT_MODEL`: Lightweight model for translations (default: `gpt-4o-mini`)
+- `PHRASES_DB_PATH`: Database file location (default: `./data/phrases.json.gz`)
+
 ## Project Structure
 
 - Python 3.13+ required
-- Uses `uv` for package management (not poetry, despite Makefile comment)
+- Uses `uv` for package management
 - Code style: Black with 120 character line length
 - Linting: flake8 with E501, W503, E203 ignored
 
