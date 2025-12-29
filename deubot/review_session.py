@@ -9,6 +9,7 @@ class ReviewCard:
     phrase_id: str
     german: str
     explanation: str
+    repetition: int
 
 
 class ReviewSession:
@@ -25,7 +26,7 @@ class ReviewSession:
 
     def start_batch(self, batch: ShowReviewBatchOutput) -> ReviewCard | None:
         """Start a batch session, return first card to show."""
-        self.pending_cards = [ReviewCard(r.phrase_id, r.german, r.explanation) for r in batch.reviews]
+        self.pending_cards = [ReviewCard(r.phrase_id, r.german, r.explanation, r.repetition) for r in batch.reviews]
         return self.advance()
 
     def advance(self) -> ReviewCard | None:

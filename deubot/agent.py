@@ -28,6 +28,7 @@ class ShowReviewOutput:
     phrase_id: str
     german: str
     explanation: str
+    repetition: int
 
 
 @dataclass
@@ -134,8 +135,14 @@ class GermanLearningAgent:
 
         logger.info(f"Starting review session with {len(phrases)} phrases")
         cards = self.translation_service.get_translation_cards_parallel(phrases)
+        repetition_by_id = {p["id"]: p["repetition"] for p in phrases}
         review_outputs = [
-            ShowReviewOutput(phrase_id=card.phrase_id, german=card.german, explanation=card.explanation)
+            ShowReviewOutput(
+                phrase_id=card.phrase_id,
+                german=card.german,
+                explanation=card.explanation,
+                repetition=repetition_by_id[card.phrase_id],
+            )
             for card in cards
         ]
 

@@ -20,6 +20,16 @@ from deubot.systemd import notify_systemd
 logger = logging.getLogger(__name__)
 
 
+def _format_level(repetition: int) -> str:
+    if repetition == 0:
+        return "New"
+    elif repetition < 3:
+        return "Learning"
+    elif repetition < 6:
+        return "Familiar"
+    return "Mastered"
+
+
 class AuthFilter(filters.MessageFilter):
     def __init__(self, allowed_user_id: int):
         super().__init__()
@@ -154,7 +164,8 @@ class DeuBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
+        level = _format_level(card.repetition)
+        text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
         try:
             await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
         except BadRequest as e:
@@ -173,7 +184,8 @@ class DeuBot:
         self.review_session.record_quality(phrase_id, quality)
 
         try:
-            text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
+            level = _format_level(card.repetition)
+            text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             await query.edit_message_text(
                 text,
                 parse_mode="HTML",
