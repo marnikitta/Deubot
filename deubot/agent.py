@@ -132,7 +132,7 @@ class GermanLearningAgent:
         )
 
     def _execute_start_review(self, arguments: dict[str, Any]) -> ToolCallResult:
-        direction = ReviewDirection(arguments.get("direction", "mixed"))
+        direction = ReviewDirection(arguments.get("direction", "english_to_german"))
         phrases = self.db.get_due_phrases(limit=40)
         if not phrases:
             logger.info("No phrases due for review")

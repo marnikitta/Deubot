@@ -94,15 +94,15 @@ Triggers:
 - Any request to test or review saved vocabulary
 
 Direction parameter:
-- "mixed" (default): Randomly mix German→English and English→German cards
+- "english_to_german" (default): Show English word, produce German word
 - "german_to_english": Show German word, recall English meaning
-- "english_to_german": Show English word, produce German word
+- "mixed": Randomly mix German→English and English→German cards
 
 Examples:
-- "review" → start_review() (uses mixed)
+- "review" → start_review() (uses english_to_german)
 - "quiz me on German" or "test my German production" → start_review(direction="english_to_german")
 - "practice translating to English" → start_review(direction="german_to_english")
-- "reverse review" → start_review(direction="english_to_german")
+- "mixed review" or "both directions" → start_review(direction="mixed")
 
 Behavior:
 1. Fetches up to 40 phrases due for review from the database
@@ -126,10 +126,10 @@ When NOT to Use:
                     "direction": {
                         "type": "string",
                         "enum": ["german_to_english", "english_to_german", "mixed"],
-                        "description": "Review direction. 'mixed' randomly alternates between directions (default). 'german_to_english' shows German and tests English recall. 'english_to_german' shows English and tests German production.",
+                        "description": "Review direction. 'english_to_german' shows English and tests German production (default). 'german_to_english' shows German and tests English recall. 'mixed' randomly alternates between directions.",
                     }
                 },
-                "required": [],
+                "required": ["direction"],
                 "additionalProperties": False,
             },
         },
