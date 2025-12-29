@@ -1,0 +1,54 @@
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+
+from deubot.database import PhrasesDB
+
+pytestmark = pytest.mark.unit
+
+
+@pytest.fixture
+def temp_db():
+    with tempfile.NamedTemporaryFile(suffix=".db.gz", delete=False) as f:
+        db_path = f.name
+    db = PhrasesDB(db_path=db_path)
+    yield db
+    Path(db_path).unlink(missing_ok=True)
+
+
+def test_get_due_phrases_empty_database(temp_db):
+    """Empty database should return empty list, not crash."""
+    assert temp_db.get_due_phrases() == []
+
+
+def test_get_due_phrases_fallback_when_none_due(temp_db):
+    """When no phrases are due, should return phrases anyway (fallback behavior)."""
+    temp_db.add_phrase("der Hund", "the dog")
+    temp_db.add_phrase("die Katze", "the cat")
+
+    # Set all to future
+    future = (datetime.now() + timedelta(days=30)).isoformat()
+    for phrase in temp_db.phrases.values():
+        phrase.next_review = future
+
+    # Should still return phrases (fallback)
+    result = temp_db.get_due_phrases()
+    assert len(result) == 2
+
+
+def test_update_review_nonexistent_phrase(temp_db):
+    """update_review with unknown phrase_id should not crash."""
+    temp_db.add_phrase("der Hund", "the dog")
+    temp_db.update_review("nonexistent_id", quality=4)
+    assert len(temp_db.phrases) == 1
+
+
+def test_in_memory_db_works():
+    """Database with db_path=None should work without file operations."""
+    db = PhrasesDB(db_path=None)
+    phrase_id, is_new, _ = db.add_phrase("der Hund", "the dog")
+    assert is_new
+    db.update_review(phrase_id, quality=4)
+    assert db.phrases[phrase_id].repetition == 1

@@ -155,6 +155,7 @@ Configuration via `.env` file (see `.env.example`):
 - Keep tests robust. Dont use mocks in tests
 - When testing LLM interactions, design tests to be resilient to the probabilistic nature of model outputs. Check for semantic correctness and presence of key information rather than exact string matches. Tests should validate behavior patterns, not exact phrasing
 - Dont run tests if it is not required by the task. They are long and comprehensive for end2end testing
+- Write tests only when they add value: non-trivial logic, edge cases, important invariants. Don't test simple mappings, getters, or obvious code. A test for `1+1==2` is waste
 - Use `logging.getLogger(__name__)` for logger instances to enable hierarchical filtering
 - Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Include relevant context directly in log messages
 - Keep the specific tool calls examples in the tools.py rather than system prompt

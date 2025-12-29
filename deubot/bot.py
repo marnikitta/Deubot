@@ -14,21 +14,12 @@ from deubot.agent import (
     UserOutput,
     escape_html,
 )
+from deubot.bot_helpers import format_level, get_quality_name, parse_callback_data
 from deubot.review_session import ReviewSession, ReviewCard
 from deubot.translations import ReviewDirection
 from deubot.systemd import notify_systemd
 
 logger = logging.getLogger(__name__)
-
-
-def _format_level(repetition: int) -> str:
-    if repetition == 0:
-        return "New"
-    elif repetition < 3:
-        return "Learning"
-    elif repetition < 6:
-        return "Familiar"
-    return "Mastered"
 
 
 class AuthFilter(filters.MessageFilter):
@@ -143,16 +134,15 @@ class DeuBot:
             return
 
         await query.answer()
-        data = query.data
 
-        if data.startswith("reveal_"):
-            phrase_id = data.split("_")[1]
-            await self._handle_reveal(query, phrase_id)
-        elif data.startswith("quality_"):
-            parts = data.split("_")
-            phrase_id = parts[1]
-            quality = int(parts[2])
-            await self._handle_quality(query, phrase_id, quality)
+        callback = parse_callback_data(query.data)
+        if not callback:
+            return
+
+        if callback.action == "reveal":
+            await self._handle_reveal(query, callback.phrase_id)
+        elif callback.action == "quality" and callback.quality is not None:
+            await self._handle_quality(query, callback.phrase_id, callback.quality)
 
     async def _handle_reveal(self, query, phrase_id: str) -> None:
         card = self.review_session.current_card
@@ -171,7 +161,7 @@ class DeuBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        level = _format_level(card.repetition)
+        level = format_level(card.repetition)
         text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
         try:
             await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
@@ -185,13 +175,12 @@ class DeuBot:
         if not card or card.phrase_id != phrase_id:
             return
 
-        quality_names = {1: "Nochmal / Again", 2: "Schwer / Hard", 3: "Gut / Good", 4: "Leicht / Easy"}
-        quality_name = quality_names.get(quality, "")
+        quality_name = get_quality_name(quality)
 
         self.review_session.record_quality(phrase_id, quality)
 
         try:
-            level = _format_level(card.repetition)
+            level = format_level(card.repetition)
             text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             await query.edit_message_text(
                 text,
