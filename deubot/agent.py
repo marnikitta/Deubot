@@ -230,7 +230,7 @@ class GermanLearningAgent:
 
     def _call_llm(self, input_list: list[dict], iteration: int):
         """Call the LLM API and log statistics."""
-        response = self.client.responses.create(  # type: ignore
+        response = self.client.responses.create(  # type: ignore[call-overload]
             model=self.model,
             instructions=self.system_prompt,
             input=input_list,
