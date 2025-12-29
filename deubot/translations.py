@@ -50,11 +50,11 @@ class TranslationCard:
 
 
 class TranslationService:
-    def __init__(self, client: OpenAI, model: str, num_workers: int = 20):
+    def __init__(self, client: OpenAI, model: str, max_workers: int = 50):
         self.client = client
         self.model = model
         self._cache: dict[str, str] = {}
-        self.num_workers = num_workers
+        self.max_workers = max_workers
 
     def _get_cached_translation(self, german: str) -> str:
         if german in self._cache:
@@ -91,7 +91,7 @@ class TranslationService:
 
         results: dict[str, TranslationCard] = {}
 
-        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_phrase = {
                 executor.submit(self.get_translation_card, p["id"], p["german"]): p["id"] for p in phrases
             }

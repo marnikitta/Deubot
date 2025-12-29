@@ -127,7 +127,7 @@ class GermanLearningAgent:
         )
 
     def _execute_start_review(self) -> ToolCallResult:
-        phrases = self.db.get_due_phrases(limit=20)
+        phrases = self.db.get_due_phrases(limit=40)
         if not phrases:
             logger.info("No phrases due for review")
             return ToolCallResult(result="No phrases due for review", needs_llm_followup=True, user_outputs=[])
@@ -225,8 +225,9 @@ class GermanLearningAgent:
                 return ToolCallResult(result="Unknown tool", needs_llm_followup=False, user_outputs=[])
 
     def clear_history(self) -> None:
-        """Clear the conversation history."""
+        """Clear the conversation history and translation cache."""
         self.messages = []
+        self.translation_service.clear_cache()
 
     def _call_llm(self, input_list: list[dict], iteration: int):
         """Call the LLM API and log statistics."""
