@@ -40,6 +40,10 @@ remote-stop:
 	ssh -T $(host) "systemctl --user status $(service_name) --no-pager || true"
 
 
-.PHONY: run test test-unit test-llm lint push install deploy remote-stop
+check:
+	make lint
+	make test
+
+.PHONY: run test test-unit test-llm lint push install deploy remote-stop check
 
 

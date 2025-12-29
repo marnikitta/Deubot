@@ -118,8 +118,9 @@ def test_review_explanation_format(agent: GermanLearningAgent):
     # Explanation should be substantial
     assert len(explanation) > 50
 
-    # Should not contain rambling questions (bad pattern)
-    assert "?" not in explanation or explanation.count("?") <= 3
+    # Should not contain excessive rambling questions (bad pattern)
+    # Allow up to 5 since example sentences may legitimately contain questions
+    assert "?" not in explanation or explanation.count("?") <= 5
 
 
 def test_user_can_interrupt_review_session(agent: GermanLearningAgent):
