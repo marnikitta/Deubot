@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 class Phrase:
     id: str
     german: str
+    english: str
     ease_factor: float = 2.5
     interval_days: int = 0
     repetition: int = 0
@@ -89,7 +90,7 @@ class PhrasesDB:
 
         return None
 
-    def add_phrase(self, german: str) -> tuple[str, bool, str | None]:
+    def add_phrase(self, german: str, english: str) -> tuple[str, bool, str | None]:
         existing_phrase = self.find_similar_phrase(german)
 
         if existing_phrase:
@@ -105,6 +106,7 @@ class PhrasesDB:
         phrase = Phrase(
             id=phrase_id,
             german=german,
+            english=english,
             next_review=now,
         )
         self.phrases[phrase_id] = phrase

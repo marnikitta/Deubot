@@ -15,6 +15,7 @@ from deubot.agent import (
     escape_html,
 )
 from deubot.review_session import ReviewSession, ReviewCard
+from deubot.translations import ReviewDirection
 from deubot.systemd import notify_systemd
 
 logger = logging.getLogger(__name__)
@@ -122,7 +123,13 @@ class DeuBot:
         keyboard = [[InlineKeyboardButton("Zeigen / Reveal", callback_data=f"reveal_{card.phrase_id}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        text = f"<b>{escape_html(card.german)}</b>\n\n<i>Was bedeutet das? / What does this mean?</i>"
+        if card.direction == ReviewDirection.GERMAN_TO_ENGLISH:
+            front = card.german
+            prompt = "Was bedeutet das? / What does this mean?"
+        else:  # english_to_german
+            front = card.english
+            prompt = "Wie sagt man das auf Deutsch? / How do you say this in German?"
+        text = f"<b>{escape_html(front)}</b>\n\n<i>{prompt}</i>"
         await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

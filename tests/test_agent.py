@@ -50,9 +50,9 @@ def test_translation_and_context(agent: GermanLearningAgent):
 
 def test_get_phrases_when_database_populated(agent: GermanLearningAgent):
     """Test that agent can reference saved phrases."""
-    agent.db.add_phrase("Danke")
-    agent.db.add_phrase("Bitte")
-    agent.db.add_phrase("Entschuldigung")
+    agent.db.add_phrase("Danke", "thank you")
+    agent.db.add_phrase("Bitte", "please")
+    agent.db.add_phrase("Entschuldigung", "excuse me")
 
     outputs = list(agent.process_message("Show me all my saved phrases"))
 
@@ -93,8 +93,8 @@ def test_in_memory_db_persistence():
     """Test that in-memory database persists phrases correctly."""
     db = PhrasesDB()
 
-    phrase_id_1, _, _ = db.add_phrase("Guten Tag")
-    _, _, _ = db.add_phrase("Auf Wiedersehen")
+    phrase_id_1, _, _ = db.add_phrase("Guten Tag", "good day")
+    _, _, _ = db.add_phrase("Auf Wiedersehen", "goodbye")
 
     all_phrases = db.get_all_phrases()
     assert len(all_phrases) == 2

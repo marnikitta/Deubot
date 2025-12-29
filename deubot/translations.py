@@ -1,13 +1,21 @@
 """Translation card generation for German phrases."""
 
 import logging
+import random
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
+
+
+class ReviewDirection(str, Enum):
+    GERMAN_TO_ENGLISH = "german_to_english"
+    ENGLISH_TO_GERMAN = "english_to_german"
+    MIXED = "mixed"
 
 
 TRANSLATION_PROMPT = """Generate a comprehensive learning card for the German phrase provided by the user.
@@ -46,7 +54,9 @@ Plural: die Handtücher (umlaut a→ä)
 class TranslationCard:
     phrase_id: str
     german: str
+    english: str
     explanation: str
+    direction: ReviewDirection
 
 
 class TranslationService:
@@ -81,19 +91,38 @@ class TranslationService:
         self._cache[german] = explanation
         return explanation
 
-    def get_translation_card(self, phrase_id: str, german: str) -> TranslationCard:
+    def get_translation_card(
+        self, phrase_id: str, german: str, english: str, direction: ReviewDirection
+    ) -> TranslationCard:
         explanation = self._get_cached_translation(german)
-        return TranslationCard(phrase_id=phrase_id, german=german, explanation=explanation)
+        return TranslationCard(
+            phrase_id=phrase_id, german=german, english=english, explanation=explanation, direction=direction
+        )
 
-    def get_translation_cards_parallel(self, phrases: list[dict[str, Any]]) -> list[TranslationCard]:
+    def get_translation_cards_parallel(
+        self, phrases: list[dict[str, Any]], direction: ReviewDirection = ReviewDirection.MIXED
+    ) -> list[TranslationCard]:
         if not phrases:
             return []
+
+        # Assign directions for each phrase (for mixed mode, randomly assign)
+        phrase_directions: dict[str, ReviewDirection] = {}
+        for p in phrases:
+            if direction == ReviewDirection.MIXED:
+                phrase_directions[p["id"]] = random.choice(
+                    [ReviewDirection.GERMAN_TO_ENGLISH, ReviewDirection.ENGLISH_TO_GERMAN]
+                )
+            else:
+                phrase_directions[p["id"]] = direction
 
         results: dict[str, TranslationCard] = {}
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_phrase = {
-                executor.submit(self.get_translation_card, p["id"], p["german"]): p["id"] for p in phrases
+                executor.submit(
+                    self.get_translation_card, p["id"], p["german"], p["english"], phrase_directions[p["id"]]
+                ): p["id"]
+                for p in phrases
             }
 
             for future in as_completed(future_to_phrase):
@@ -104,11 +133,15 @@ class TranslationService:
                     logger.debug(f"Generated translation card for phrase {phrase_id}")
                 except Exception as e:
                     logger.error(f"Failed to get translation for phrase {phrase_id}: {e}")
-                    german = next(p["german"] for p in phrases if p["id"] == phrase_id)
+                    phrase_data = next(p for p in phrases if p["id"] == phrase_id)
+                    german = phrase_data["german"]
+                    english = phrase_data["english"]
                     results[phrase_id] = TranslationCard(
                         phrase_id=phrase_id,
                         german=german,
+                        english=english,
                         explanation=f"<b>{german}</b>\n\n<i>Translation unavailable</i>",
+                        direction=phrase_directions[phrase_id],
                     )
 
         return [results[p["id"]] for p in phrases]

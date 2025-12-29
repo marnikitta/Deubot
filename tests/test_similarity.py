@@ -20,8 +20,8 @@ def temp_db():
 
 def test_exact_match(temp_db):
     """Exact same phrase should be detected as duplicate."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hund")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hund", "the dog")
 
     assert not is_new
     assert existing == "der Hund"
@@ -29,8 +29,8 @@ def test_exact_match(temp_db):
 
 def test_case_difference(temp_db):
     """Different case should be detected as duplicate."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("Der Hund")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("Der Hund", "the dog")
 
     assert not is_new
     assert existing == "der Hund"
@@ -38,8 +38,8 @@ def test_case_difference(temp_db):
 
 def test_article_variations(temp_db):
     """Phrase with and without article should be detected as duplicate."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("Hund")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("Hund", "dog")
 
     assert not is_new
     assert existing == "der Hund"
@@ -47,8 +47,8 @@ def test_article_variations(temp_db):
 
 def test_article_variations_reverse(temp_db):
     """Adding article to existing phrase without article should match."""
-    temp_db.add_phrase("Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hund")
+    temp_db.add_phrase("Hund", "dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hund", "the dog")
 
     assert not is_new
     assert existing == "Hund"
@@ -56,8 +56,8 @@ def test_article_variations_reverse(temp_db):
 
 def test_different_articles_same_word(temp_db):
     """Different articles for the same word should be detected as duplicate."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("die Hund")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("die Hund", "the dog")
 
     assert not is_new
     assert existing == "der Hund"
@@ -65,8 +65,8 @@ def test_different_articles_same_word(temp_db):
 
 def test_whitespace_variations(temp_db):
     """Extra whitespace should not affect matching."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("der  Hund")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("der  Hund", "the dog")
 
     assert not is_new
     assert existing == "der Hund"
@@ -75,8 +75,8 @@ def test_whitespace_variations(temp_db):
 def test_unicode_normalization(temp_db):
     """Different unicode representations should match."""
     # Using a word with umlaut
-    temp_db.add_phrase("über")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("über")  # Same visual result
+    temp_db.add_phrase("über", "over")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("über", "over")  # Same visual result
 
     assert not is_new
     assert existing == "über"
@@ -84,8 +84,8 @@ def test_unicode_normalization(temp_db):
 
 def test_completely_different_words(temp_db):
     """Completely different words should NOT match."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("die Katze")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("die Katze", "the cat")
 
     assert is_new
     assert existing is None
@@ -93,8 +93,8 @@ def test_completely_different_words(temp_db):
 
 def test_similar_but_different_words(temp_db):
     """Similar but different words should NOT match."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("der Mund")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("der Mund", "the mouth")
 
     assert is_new
     assert existing is None
@@ -102,8 +102,8 @@ def test_similar_but_different_words(temp_db):
 
 def test_phrases_with_multiple_words(temp_db):
     """Multi-word phrases should match correctly."""
-    temp_db.add_phrase("Guten Morgen")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("guten morgen")
+    temp_db.add_phrase("Guten Morgen", "good morning")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("guten morgen", "good morning")
 
     assert not is_new
     assert existing == "Guten Morgen"
@@ -111,8 +111,8 @@ def test_phrases_with_multiple_words(temp_db):
 
 def test_phrases_with_multiple_words_different(temp_db):
     """Different multi-word phrases should NOT match."""
-    temp_db.add_phrase("Guten Morgen")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("Guten Abend")
+    temp_db.add_phrase("Guten Morgen", "good morning")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("Guten Abend", "good evening")
 
     assert is_new
     assert existing is None
@@ -120,8 +120,8 @@ def test_phrases_with_multiple_words_different(temp_db):
 
 def test_leading_trailing_spaces(temp_db):
     """Leading and trailing spaces should be normalized."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("  der Hund  ")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("  der Hund  ", "the dog")
 
     assert not is_new
     assert existing == "der Hund"
@@ -129,7 +129,7 @@ def test_leading_trailing_spaces(temp_db):
 
 def test_no_duplicates_when_empty(temp_db):
     """First phrase should always be saved as new."""
-    phrase_id, is_new, existing = temp_db.add_phrase("der Hund")
+    phrase_id, is_new, existing = temp_db.add_phrase("der Hund", "the dog")
 
     assert is_new
     assert existing is None
@@ -137,9 +137,9 @@ def test_no_duplicates_when_empty(temp_db):
 
 def test_multiple_different_phrases(temp_db):
     """Multiple different phrases should all be saved."""
-    id1, is_new1, _ = temp_db.add_phrase("der Hund")
-    id2, is_new2, _ = temp_db.add_phrase("die Katze")
-    id3, is_new3, _ = temp_db.add_phrase("das Auto")
+    id1, is_new1, _ = temp_db.add_phrase("der Hund", "the dog")
+    id2, is_new2, _ = temp_db.add_phrase("die Katze", "the cat")
+    id3, is_new3, _ = temp_db.add_phrase("das Auto", "the car")
 
     assert is_new1 and is_new2 and is_new3
     assert id1 != id2 != id3
@@ -147,8 +147,8 @@ def test_multiple_different_phrases(temp_db):
 
 def test_indefinite_articles(temp_db):
     """Indefinite articles should also be stripped."""
-    temp_db.add_phrase("ein Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hund")
+    temp_db.add_phrase("ein Hund", "a dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hund", "the dog")
 
     assert not is_new
     assert existing == "ein Hund"
@@ -156,8 +156,8 @@ def test_indefinite_articles(temp_db):
 
 def test_similarity_threshold_edge_case(temp_db):
     """Test that words with low similarity are not matched."""
-    temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hand")
+    temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new, existing = temp_db.add_phrase("der Hand", "the hand")
 
     # "Hund" and "Hand" are similar but should not match (4 chars, 2 different)
     # With trigram similarity: both have 5 trigrams each, shared depends on overlap

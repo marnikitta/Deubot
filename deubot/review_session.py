@@ -2,14 +2,17 @@ from dataclasses import dataclass
 
 from deubot.agent import ShowReviewBatchOutput
 from deubot.database import PhrasesDB
+from deubot.translations import ReviewDirection
 
 
 @dataclass
 class ReviewCard:
     phrase_id: str
     german: str
+    english: str
     explanation: str
     repetition: int
+    direction: ReviewDirection
 
 
 class ReviewSession:
@@ -26,7 +29,10 @@ class ReviewSession:
 
     def start_batch(self, batch: ShowReviewBatchOutput) -> ReviewCard | None:
         """Start a batch session, return first card to show."""
-        self.pending_cards = [ReviewCard(r.phrase_id, r.german, r.explanation, r.repetition) for r in batch.reviews]
+        self.pending_cards = [
+            ReviewCard(r.phrase_id, r.german, r.english, r.explanation, r.repetition, r.direction)
+            for r in batch.reviews
+        ]
         return self.advance()
 
     def advance(self) -> ReviewCard | None:

@@ -20,8 +20,8 @@ def temp_db():
 
 def test_add_duplicate_phrase_returns_same_id(temp_db):
     """Adding the same phrase twice should return the same ID."""
-    phrase_id_1, is_new_1, _ = temp_db.add_phrase("der Hund")
-    phrase_id_2, is_new_2, existing = temp_db.add_phrase("der Hund")
+    phrase_id_1, is_new_1, _ = temp_db.add_phrase("der Hund", "the dog")
+    phrase_id_2, is_new_2, existing = temp_db.add_phrase("der Hund", "the dog")
 
     assert is_new_1
     assert not is_new_2
@@ -31,10 +31,10 @@ def test_add_duplicate_phrase_returns_same_id(temp_db):
 
 def test_add_duplicate_phrase_no_count_increase(temp_db):
     """Adding duplicate phrase should not increase phrase count."""
-    temp_db.add_phrase("der Hund")
+    temp_db.add_phrase("der Hund", "the dog")
     initial_count = len(temp_db.phrases)
 
-    temp_db.add_phrase("der Hund")
+    temp_db.add_phrase("der Hund", "the dog")
     final_count = len(temp_db.phrases)
 
     assert initial_count == final_count == 1
@@ -42,12 +42,12 @@ def test_add_duplicate_phrase_no_count_increase(temp_db):
 
 def test_add_duplicate_returns_correct_flags(temp_db):
     """Verify the tuple return values are correct."""
-    phrase_id_1, is_new_1, existing_1 = temp_db.add_phrase("die Katze")
+    phrase_id_1, is_new_1, existing_1 = temp_db.add_phrase("die Katze", "the cat")
 
     assert is_new_1 is True
     assert existing_1 is None
 
-    phrase_id_2, is_new_2, existing_2 = temp_db.add_phrase("die Katze")
+    phrase_id_2, is_new_2, existing_2 = temp_db.add_phrase("die Katze", "the cat")
 
     assert is_new_2 is False
     assert existing_2 == "die Katze"
@@ -56,7 +56,7 @@ def test_add_duplicate_returns_correct_flags(temp_db):
 
 def test_similar_phrases_detected(temp_db):
     """Test that variations of phrases are detected as duplicates."""
-    phrase_id_1, _, _ = temp_db.add_phrase("der Hund")
+    phrase_id_1, _, _ = temp_db.add_phrase("der Hund", "the dog")
 
     # Test various similar formats
     variations = [
@@ -67,7 +67,7 @@ def test_similar_phrases_detected(temp_db):
     ]
 
     for variation in variations:
-        phrase_id, is_new, existing = temp_db.add_phrase(variation)
+        phrase_id, is_new, existing = temp_db.add_phrase(variation, "the dog")
         assert not is_new, f"Failed for variation: {variation}"
         assert phrase_id == phrase_id_1, f"Failed for variation: {variation}"
         assert existing == "der Hund", f"Failed for variation: {variation}"
@@ -75,9 +75,9 @@ def test_similar_phrases_detected(temp_db):
 
 def test_different_phrases_not_detected(temp_db):
     """Test that different phrases get different IDs."""
-    id1, is_new1, _ = temp_db.add_phrase("der Hund")
-    id2, is_new2, _ = temp_db.add_phrase("die Katze")
-    id3, is_new3, _ = temp_db.add_phrase("das Auto")
+    id1, is_new1, _ = temp_db.add_phrase("der Hund", "the dog")
+    id2, is_new2, _ = temp_db.add_phrase("die Katze", "the cat")
+    id3, is_new3, _ = temp_db.add_phrase("das Auto", "the car")
 
     assert is_new1 and is_new2 and is_new3
     assert id1 != id2
@@ -90,12 +90,12 @@ def test_persistence_of_deduplication(temp_db):
     db_path = temp_db.db_path
 
     # Add phrase and close
-    temp_db.add_phrase("der Hund")
+    temp_db.add_phrase("der Hund", "the dog")
     del temp_db
 
     # Reload database
     new_db = PhrasesDB(db_path=str(db_path))
-    phrase_id, is_new, existing = new_db.add_phrase("der Hund")
+    phrase_id, is_new, existing = new_db.add_phrase("der Hund", "the dog")
 
     assert not is_new
     assert existing == "der Hund"
@@ -103,11 +103,11 @@ def test_persistence_of_deduplication(temp_db):
 
 def test_idempotency_multiple_duplicates(temp_db):
     """Test adding the same phrase multiple times."""
-    phrase_id_1, is_new_1, _ = temp_db.add_phrase("Guten Morgen")
+    phrase_id_1, is_new_1, _ = temp_db.add_phrase("Guten Morgen", "good morning")
 
     # Add same phrase 5 more times
     for _ in range(5):
-        phrase_id, is_new, existing = temp_db.add_phrase("Guten Morgen")
+        phrase_id, is_new, existing = temp_db.add_phrase("Guten Morgen", "good morning")
         assert not is_new
         assert phrase_id == phrase_id_1
         assert existing == "Guten Morgen"
@@ -119,18 +119,18 @@ def test_idempotency_multiple_duplicates(temp_db):
 def test_batch_add_with_duplicates(temp_db):
     """Test adding multiple phrases where some are duplicates."""
     # Add initial phrases
-    temp_db.add_phrase("der Hund")
-    temp_db.add_phrase("die Katze")
+    temp_db.add_phrase("der Hund", "the dog")
+    temp_db.add_phrase("die Katze", "the cat")
 
     # Add batch with mix of new and duplicate
     phrases_to_add = [
-        "das Auto",  # new
-        "der Hund",  # duplicate
-        "der Baum",  # new
-        "die Katze",  # duplicate
+        ("das Auto", "the car"),  # new
+        ("der Hund", "the dog"),  # duplicate
+        ("der Baum", "the tree"),  # new
+        ("die Katze", "the cat"),  # duplicate
     ]
 
-    results = [temp_db.add_phrase(phrase) for phrase in phrases_to_add]
+    results = [temp_db.add_phrase(phrase, english) for phrase, english in phrases_to_add]
 
     # Check results
     assert results[0][1] is True  # das Auto - new
@@ -144,7 +144,7 @@ def test_batch_add_with_duplicates(temp_db):
 
 def test_find_similar_phrase_method(temp_db):
     """Test the find_similar_phrase method directly."""
-    temp_db.add_phrase("der Hund")
+    temp_db.add_phrase("der Hund", "the dog")
 
     # Should find similar
     similar = temp_db.find_similar_phrase("der Hund")
@@ -164,13 +164,13 @@ def test_find_similar_phrase_method(temp_db):
 def test_normalization_preserves_original(temp_db):
     """Test that original phrase is preserved in database."""
     original = "Der Große Hund"
-    phrase_id, is_new, _ = temp_db.add_phrase(original)
+    phrase_id, is_new, _ = temp_db.add_phrase(original, "the big dog")
 
     # Original should be preserved
     phrase = temp_db.phrases[phrase_id]
     assert phrase.german == original
 
     # But should still match variations
-    _, is_new_2, existing = temp_db.add_phrase("der große hund")
+    _, is_new_2, existing = temp_db.add_phrase("der große hund", "the big dog")
     assert not is_new_2
     assert existing == original

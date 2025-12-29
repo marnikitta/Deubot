@@ -8,7 +8,7 @@ from openai import OpenAI
 
 from deubot.database import PhrasesDB
 from deubot.tools import get_tools
-from deubot.translations import TranslationService
+from deubot.translations import ReviewDirection, TranslationService
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,10 @@ class MessageOutput:
 class ShowReviewOutput:
     phrase_id: str
     german: str
+    english: str
     explanation: str
     repetition: int
+    direction: ReviewDirection
 
 
 @dataclass
@@ -82,8 +84,10 @@ class GermanLearningAgent:
         new_phrases = []
         duplicate_phrases = []
 
-        for german in phrases:
-            phrase_id, is_new, existing_german = self.db.add_phrase(german=german)
+        for phrase in phrases:
+            german = phrase["german"]
+            english = phrase["english"]
+            phrase_id, is_new, existing_german = self.db.add_phrase(german=german, english=english)
             saved_ids.append(phrase_id)
 
             if is_new:
@@ -127,21 +131,24 @@ class GermanLearningAgent:
             user_outputs=[MessageOutput(message=user_message)],
         )
 
-    def _execute_start_review(self) -> ToolCallResult:
+    def _execute_start_review(self, arguments: dict[str, Any]) -> ToolCallResult:
+        direction = ReviewDirection(arguments.get("direction", "mixed"))
         phrases = self.db.get_due_phrases(limit=40)
         if not phrases:
             logger.info("No phrases due for review")
             return ToolCallResult(result="No phrases due for review", needs_llm_followup=True, user_outputs=[])
 
-        logger.info(f"Starting review session with {len(phrases)} phrases")
-        cards = self.translation_service.get_translation_cards_parallel(phrases)
+        logger.info(f"Starting review session with {len(phrases)} phrases, direction={direction}")
+        cards = self.translation_service.get_translation_cards_parallel(phrases, direction=direction)
         repetition_by_id = {p["id"]: p["repetition"] for p in phrases}
         review_outputs = [
             ShowReviewOutput(
                 phrase_id=card.phrase_id,
                 german=card.german,
+                english=card.english,
                 explanation=card.explanation,
                 repetition=repetition_by_id[card.phrase_id],
+                direction=card.direction,
             )
             for card in cards
         ]
@@ -223,7 +230,7 @@ class GermanLearningAgent:
             case "save_phrases":
                 return self._execute_save_phrases(arguments)
             case "start_review":
-                return self._execute_start_review()
+                return self._execute_start_review(arguments)
             case "get_vocabulary":
                 return self._execute_get_vocabulary(arguments)
             case "remove_phrases":

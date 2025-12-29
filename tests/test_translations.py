@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import Mock, MagicMock
 from openai import OpenAI
 
-from deubot.translations import TranslationCard, TranslationService
+from deubot.translations import ReviewDirection, TranslationCard, TranslationService
 
 
 def _create_mock_client() -> Mock:
@@ -31,16 +31,32 @@ class TestTranslationCardDataclass:
         card = TranslationCard(
             phrase_id="42",
             german="Guten Morgen",
+            english="good morning",
             explanation="<b>Good morning</b>",
+            direction=ReviewDirection.GERMAN_TO_ENGLISH,
         )
         assert card.phrase_id == "42"
         assert card.german == "Guten Morgen"
+        assert card.english == "good morning"
         assert card.explanation == "<b>Good morning</b>"
+        assert card.direction == ReviewDirection.GERMAN_TO_ENGLISH
 
     def test_translation_card_equality(self):
         """Test TranslationCard equality."""
-        card1 = TranslationCard(phrase_id="1", german="Hallo", explanation="Hello")
-        card2 = TranslationCard(phrase_id="1", german="Hallo", explanation="Hello")
+        card1 = TranslationCard(
+            phrase_id="1",
+            german="Hallo",
+            english="hello",
+            explanation="Hello",
+            direction=ReviewDirection.GERMAN_TO_ENGLISH,
+        )
+        card2 = TranslationCard(
+            phrase_id="1",
+            german="Hallo",
+            english="hello",
+            explanation="Hello",
+            direction=ReviewDirection.GERMAN_TO_ENGLISH,
+        )
         assert card1 == card2
 
 
@@ -54,11 +70,11 @@ class TestCacheBehavior:
         mock_client = _create_mock_client()
         service = TranslationService(mock_client, "gpt-4")
 
-        card1 = service.get_translation_card("1", "Guten Morgen")
+        card1 = service.get_translation_card("1", "Guten Morgen", "good morning", ReviewDirection.GERMAN_TO_ENGLISH)
         assert card1.explanation == "<b>Translation</b>"
         assert mock_client.responses.create.call_count == 1
 
-        card2 = service.get_translation_card("2", "Guten Morgen")
+        card2 = service.get_translation_card("2", "Guten Morgen", "good morning", ReviewDirection.GERMAN_TO_ENGLISH)
         assert card2.explanation == "<b>Translation</b>"
         assert mock_client.responses.create.call_count == 1
 
@@ -68,10 +84,10 @@ class TestCacheBehavior:
         service1 = TranslationService(mock_client, "gpt-4")
         service2 = TranslationService(mock_client, "gpt-4")
 
-        service1.get_translation_card("1", "Hallo")
+        service1.get_translation_card("1", "Hallo", "hello", ReviewDirection.GERMAN_TO_ENGLISH)
         assert mock_client.responses.create.call_count == 1
 
-        service2.get_translation_card("1", "Hallo")
+        service2.get_translation_card("1", "Hallo", "hello", ReviewDirection.GERMAN_TO_ENGLISH)
         assert mock_client.responses.create.call_count == 2
 
     def test_clear_cache(self):
@@ -79,12 +95,12 @@ class TestCacheBehavior:
         mock_client = _create_mock_client()
         service = TranslationService(mock_client, "gpt-4")
 
-        service.get_translation_card("1", "Hallo")
+        service.get_translation_card("1", "Hallo", "hello", ReviewDirection.GERMAN_TO_ENGLISH)
         assert mock_client.responses.create.call_count == 1
 
         service.clear_cache()
 
-        service.get_translation_card("1", "Hallo")
+        service.get_translation_card("1", "Hallo", "hello", ReviewDirection.GERMAN_TO_ENGLISH)
         assert mock_client.responses.create.call_count == 2
 
 
@@ -99,16 +115,17 @@ class TestParallelExecution:
         service = TranslationService(mock_client, "gpt-4")
 
         phrases = [
-            {"id": "1", "german": "Hallo"},
-            {"id": "2", "german": "Danke"},
-            {"id": "3", "german": "Bitte"},
+            {"id": "1", "german": "Hallo", "english": "hello"},
+            {"id": "2", "german": "Danke", "english": "thank you"},
+            {"id": "3", "german": "Bitte", "english": "please"},
         ]
 
-        cards = service.get_translation_cards_parallel(phrases)
+        cards = service.get_translation_cards_parallel(phrases, direction=ReviewDirection.GERMAN_TO_ENGLISH)
 
         assert len(cards) == 3
         assert cards[0].phrase_id == "1"
         assert cards[0].german == "Hallo"
+        assert cards[0].english == "hello"
         assert cards[1].phrase_id == "2"
         assert cards[1].german == "Danke"
         assert cards[2].phrase_id == "3"
@@ -127,13 +144,14 @@ class TestParallelExecution:
         mock_client.responses.create.side_effect = Exception("API Error")
         service = TranslationService(mock_client, "gpt-4")
 
-        phrases = [{"id": "1", "german": "Hallo"}]
+        phrases = [{"id": "1", "german": "Hallo", "english": "hello"}]
 
-        cards = service.get_translation_cards_parallel(phrases)
+        cards = service.get_translation_cards_parallel(phrases, direction=ReviewDirection.GERMAN_TO_ENGLISH)
 
         assert len(cards) == 1
         assert cards[0].phrase_id == "1"
         assert cards[0].german == "Hallo"
+        assert cards[0].english == "hello"
         assert "Translation unavailable" in cards[0].explanation
 
 
@@ -150,16 +168,17 @@ class TestLLMIntegration:
 
     def test_get_translation_card_produces_valid_html(self, translation_service):
         """Test that translation cards contain expected HTML structure."""
-        card = translation_service.get_translation_card("1", "Guten Morgen")
+        card = translation_service.get_translation_card("1", "Guten Morgen", "good morning", "german_to_english")
 
         assert card.phrase_id == "1"
         assert card.german == "Guten Morgen"
+        assert card.english == "good morning"
         assert "<b>" in card.explanation
         assert len(card.explanation) > 50
 
     def test_translation_card_contains_key_elements(self, translation_service):
         """Test that translation includes pronunciation and examples."""
-        card = translation_service.get_translation_card("1", "das Krankenhaus")
+        card = translation_service.get_translation_card("1", "das Krankenhaus", "the hospital", "german_to_english")
 
         explanation_lower = card.explanation.lower()
         assert "hospital" in explanation_lower
@@ -167,15 +186,16 @@ class TestLLMIntegration:
     def test_parallel_cards_all_have_content(self, translation_service):
         """Test that parallel execution produces complete cards for all phrases."""
         phrases = [
-            {"id": "1", "german": "Hallo"},
-            {"id": "2", "german": "Danke"},
-            {"id": "3", "german": "Bitte"},
+            {"id": "1", "german": "Hallo", "english": "hello"},
+            {"id": "2", "german": "Danke", "english": "thank you"},
+            {"id": "3", "german": "Bitte", "english": "please"},
         ]
 
-        cards = translation_service.get_translation_cards_parallel(phrases)
+        cards = translation_service.get_translation_cards_parallel(phrases, direction="german_to_english")
 
         assert len(cards) == 3
         for card, phrase in zip(cards, phrases):
             assert card.phrase_id == phrase["id"]
             assert card.german == phrase["german"]
+            assert card.english == phrase["english"]
             assert len(card.explanation) > 20

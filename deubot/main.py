@@ -54,6 +54,7 @@ def main():
 
     logger.info("Initializing DeuBot...")
     db = PhrasesDB(db_path)
+
     agent = GermanLearningAgent(api_key=openai_api_key, model=openai_model, light_model=openai_light_model, db=db)
     bot = DeuBot(token=telegram_token, allowed_user_id=allowed_user_id, agent=agent)
 

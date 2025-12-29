@@ -10,9 +10,9 @@ pytestmark = pytest.mark.llm
 def test_review_session_with_multiple_phrases(agent: GermanLearningAgent):
     """Test complete review session with multiple phrases."""
     # Add phrases that are due for review
-    agent.db.add_phrase("Guten Morgen")
-    agent.db.add_phrase("Guten Abend")
-    agent.db.add_phrase("Danke schön")
+    agent.db.add_phrase("Guten Morgen", "good morning")
+    agent.db.add_phrase("Guten Abend", "good evening")
+    agent.db.add_phrase("Danke schön", "thank you very much")
 
     # Start review session
     outputs = list(agent.process_message("I want to start a review session"))
@@ -54,7 +54,7 @@ def test_review_session_with_no_due_phrases(agent: GermanLearningAgent):
 def test_review_updates_database(agent: GermanLearningAgent):
     """Test that completing reviews updates the database correctly (simulating bot.py behavior)."""
     # Add phrase
-    phrase_id, _, _ = agent.db.add_phrase("Auf Wiedersehen")
+    phrase_id, _, _ = agent.db.add_phrase("Auf Wiedersehen", "goodbye")
 
     # Get initial state
     initial_phrase = [p for p in agent.db.get_all_phrases() if p["id"] == phrase_id][0]
@@ -78,8 +78,8 @@ def test_review_updates_database(agent: GermanLearningAgent):
 def test_review_with_different_quality_ratings(agent: GermanLearningAgent):
     """Test that different quality ratings affect the review schedule (simulating bot.py behavior)."""
     # Add two phrases
-    phrase_id_1, _, _ = agent.db.add_phrase("Entschuldigung")
-    phrase_id_2, _, _ = agent.db.add_phrase("Bitte")
+    phrase_id_1, _, _ = agent.db.add_phrase("Entschuldigung", "excuse me")
+    phrase_id_2, _, _ = agent.db.add_phrase("Bitte", "please")
 
     # Start review session - get batch
     outputs = list(agent.process_message("I want to start a review session"))
@@ -105,7 +105,7 @@ def test_review_with_different_quality_ratings(agent: GermanLearningAgent):
 
 def test_review_explanation_format(agent: GermanLearningAgent):
     """Test that review explanations are properly formatted."""
-    agent.db.add_phrase("Guten Morgen")
+    agent.db.add_phrase("Guten Morgen", "good morning")
 
     outputs = list(agent.process_message("I want to start a review session"))
     batch_outputs = [o for o in outputs if isinstance(o, ShowReviewBatchOutput)]
@@ -125,7 +125,7 @@ def test_review_explanation_format(agent: GermanLearningAgent):
 
 def test_user_can_interrupt_review_session(agent: GermanLearningAgent):
     """Test that user can interrupt review session with a question."""
-    agent.db.add_phrase("Guten Morgen")
+    agent.db.add_phrase("Guten Morgen", "good morning")
 
     # Start review - agent sends batch
     outputs = list(agent.process_message("I want to start a review session"))

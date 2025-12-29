@@ -23,9 +23,19 @@ def get_tools() -> list[dict[str, Any]]:
         {
             "type": "function",
             "name": "save_phrases",
-            "description": """Save German phrases to the learning database for spaced repetition review.
+            "description": """Save German phrases with English translations to the learning database.
 
 Call this tool immediately when the user provides or asks about concrete German phrase(s). Do not announce intent before calling.
+
+REQUIRED FIELDS:
+Each phrase must have both 'german' and 'english' fields:
+- german: The German phrase (with article for nouns)
+- english: Short English translation (2-5 words)
+
+ENGLISH TRANSLATION GUIDELINES:
+- Nouns: include article ("the dog", "a house")
+- Verbs: use infinitive ("to run", "to eat")
+- Phrases: natural equivalent ("good morning")
 
 ARTICLE HANDLING - CRITICAL:
 German nouns MUST include articles (der/die/das). Capitalized words are almost always nouns.
@@ -37,18 +47,12 @@ When unsure if it's a noun, add the article - better to have it than not.
 Only skip articles for: greetings, verbs, adjectives, adverbs, phrases.
 
 BATCH SAVING:
-Always pass phrases as an array: ["der Hund"] not "der Hund". No limit on array size.
-- Single: save_phrases(["der Regenschirm"])
-- Multiple: save_phrases(["der Hund", "die Katze", "das Pferd"])
-- Large: save_phrases([100+ phrases]) for vocabulary imports
+- Single: save_phrases([{"german": "der Hund", "english": "the dog"}])
+- Multiple: save_phrases([{"german": "der Hund", "english": "the dog"}, {"german": "die Katze", "english": "the cat"}])
 
 When NOT to Use:
 - Grammar questions without concrete phrases ("What is the dative case?")
 - User explicitly asks not to save
-
-WRONG Examples:
-- save_phrases(["Datenschutz"]) ← MISSING ARTICLE! Must be "der Datenschutz"
-- Announcing "I'll save this phrase..." before calling ← Just call the tool immediately
 
 ONE FORM PER CONCEPT:
 Save canonical form only. "der Arzt" not both "der Arzt" and "die Ärztin".
@@ -62,8 +66,16 @@ Auto-correct obvious typos ("Krankenhuas" → "das Krankenhaus"). Ask if ambiguo
                 "properties": {
                     "phrases": {
                         "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Array of German phrases to save. Each phrase should include articles for nouns (e.g., 'der Hund', not 'Hund'). Examples: ['der Hund'], ['Hallo', 'Tschüss', 'Danke'], or even 1000+ phrases.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "german": {"type": "string", "description": "German phrase with article for nouns"},
+                                "english": {"type": "string", "description": "Short English translation (2-5 words)"},
+                            },
+                            "required": ["german", "english"],
+                            "additionalProperties": False,
+                        },
+                        "description": "Array of phrase objects with german and english fields.",
                     }
                 },
                 "required": ["phrases"],
@@ -81,8 +93,19 @@ Triggers:
 - "/review", "review", "let's practice", "practice", "quiz me"
 - Any request to test or review saved vocabulary
 
+Direction parameter:
+- "mixed" (default): Randomly mix German→English and English→German cards
+- "german_to_english": Show German word, recall English meaning
+- "english_to_german": Show English word, produce German word
+
+Examples:
+- "review" → start_review() (uses mixed)
+- "quiz me on German" or "test my German production" → start_review(direction="english_to_german")
+- "practice translating to English" → start_review(direction="german_to_english")
+- "reverse review" → start_review(direction="english_to_german")
+
 Behavior:
-1. Fetches up to 10 phrases due for review from the database
+1. Fetches up to 40 phrases due for review from the database
 2. Generates translation cards for each phrase automatically
 3. Presents cards one by one to the user
 4. User rates each card; bot handles the review flow locally
@@ -99,7 +122,13 @@ When NOT to Use:
             "strict": True,
             "parameters": {
                 "type": "object",
-                "properties": {},
+                "properties": {
+                    "direction": {
+                        "type": "string",
+                        "enum": ["german_to_english", "english_to_german", "mixed"],
+                        "description": "Review direction. 'mixed' randomly alternates between directions (default). 'german_to_english' shows German and tests English recall. 'english_to_german' shows English and tests German production.",
+                    }
+                },
                 "required": [],
                 "additionalProperties": False,
             },
