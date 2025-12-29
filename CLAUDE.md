@@ -40,8 +40,8 @@ uv run pytest tests/ -m llm -n 20 -v     # LLM tests only with parallelization
 
 **Test Organization**:
 Tests are categorized using pytest markers:
-- **@pytest.mark.unit**: Fast unit tests (database, SM-2 algorithm, similarity detection) that don't require LLM API calls
-- **@pytest.mark.llm**: Integration tests that make actual OpenAI API calls and require parallel execution (-n 20)
+- **@pytest.mark.unit**: Fast unit tests (database, SM-2 algorithm, similarity detection). **MUST NOT make any LLM/API calls.** Target: <1 second total.
+- **@pytest.mark.llm**: Integration tests with actual OpenAI API calls. **MAY be long-running (30-50s per test).** Require parallel execution (`-n 20`).
 
 **Testing Best Practice**:
 - Run `make test-unit` during development for fast feedback (< 1 second)
