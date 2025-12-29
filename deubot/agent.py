@@ -235,7 +235,7 @@ class GermanLearningAgent:
             instructions=self.system_prompt,
             input=input_list,
             tools=self.tools,
-            reasoning={"effort": "minimal"},
+            reasoning={"effort": "none"},
             text={"verbosity": "low"},
         )
 

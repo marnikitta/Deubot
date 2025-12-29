@@ -67,7 +67,7 @@ class TranslationService:
             model=self.model,
             instructions=TRANSLATION_PROMPT,
             input=[{"role": "user", "content": german}],
-            reasoning={"effort": "minimal"},
+            reasoning={"effort": "none"},
             text={"verbosity": "low"},
         )
 
