@@ -159,3 +159,4 @@ Configuration via `.env` file (see `.env.example`):
 - Use `logging.getLogger(__name__)` for logger instances to enable hierarchical filtering
 - Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Include relevant context directly in log messages
 - Keep the specific tool calls examples in the tools.py rather than system prompt
+- When fixing LLM behavior, prefer minimal prompt changes with concrete examples over verbose explanations. One example like `"schwimme" → "schwimmen"` beats paragraphs of rules

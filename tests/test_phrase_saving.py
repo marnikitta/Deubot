@@ -200,3 +200,41 @@ def test_greeting_saved_without_article(agent: GermanLearningAgent, test_db: Phr
         for phrase in saved_phrases
         if "guten morgen" in phrase.lower()
     ), f"Greeting should not have article, got: {saved_phrases}"
+
+
+@pytest.mark.parametrize(
+    "conjugated_verb,expected_infinitive",
+    [
+        ("schwimme", "schwimmen"),
+        ("laufe", "laufen"),
+        ("esse", "essen"),
+        ("spiele", "spielen"),
+    ],
+)
+def test_verb_saved_as_infinitive_only(
+    agent: GermanLearningAgent, test_db: PhrasesDB, conjugated_verb: str, expected_infinitive: str
+):
+    """Test that conjugated verbs are saved as infinitive only, not multiple forms."""
+    # Arrange
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act - user sends conjugated verb
+    _ = list(agent.process_message(conjugated_verb))
+
+    # Assert - exactly one phrase was saved
+    final_count = len(test_db.get_all_phrases())
+    assert final_count > initial_count, f"Phrase was not saved for: {conjugated_verb}"
+    assert final_count == initial_count + 1, f"Expected exactly 1 phrase, got {final_count - initial_count}"
+
+    # Check the saved phrase is the infinitive, not a compound like "schwimmen, ich schwimme"
+    all_phrases = test_db.get_all_phrases()
+    saved_phrases = [p["german"] for p in all_phrases]
+
+    # Find the phrase containing our verb
+    matching = [p for p in saved_phrases if expected_infinitive in p.lower()]
+    assert len(matching) == 1, f"Expected exactly one phrase with '{expected_infinitive}', got: {matching}"
+
+    # Should NOT contain comma (multiple forms) or "ich" prefix
+    saved = matching[0]
+    assert "," not in saved, f"Verb should be saved as single form, not compound: '{saved}'"
+    assert "ich " not in saved.lower(), f"Verb should be infinitive only, not conjugated with 'ich': '{saved}'"

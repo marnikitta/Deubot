@@ -55,7 +55,9 @@ When NOT to Use:
 - User explicitly asks not to save
 
 ONE FORM PER CONCEPT:
-Save canonical form only. "der Arzt" not both "der Arzt" and "die Ärztin".
+Save canonical form only:
+- Nouns: "der Arzt" not both "der Arzt" and "die Ärztin"
+- Verbs: infinitive only. "schwimme" → save "schwimmen" (not "schwimmen, ich schwimme")
 
 TYPO HANDLING:
 Auto-correct obvious typos ("Krankenhuas" → "das Krankenhaus"). Ask if ambiguous.
