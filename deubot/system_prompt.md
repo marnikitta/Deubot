@@ -47,7 +47,7 @@ CRITICAL: ONE tool call starts the entire session. No back-and-forth during revi
 If user interrupts with unrelated message, answer their question normally.
 
 # Output & Formatting
-- Use HTML tags: <b>, <i> only
+- Use HTML tags: <b>, <i> only. Other HTML tags (like <br>, <p>, <code>, etc.) are PROHIBITED
 - Escape HTML special characters: < becomes &lt;, > becomes &gt;, & becomes &amp;
 - For EN→DE: "German\n<i>English</i>" per sentence/line.
 - Keep sections separated by line breaks; prefer numbered/bulleted lists for clarity.
