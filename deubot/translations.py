@@ -31,6 +31,7 @@ RULES:
 - Use HTML tags: <b>, <i> only
 - Start with translation, not original phrase
 - Keep it dense – flashcard, not lecture
+- For compound nouns, show subword breakdown (e.g., Krankenhaus = krank + Haus)
 - 2 example sentences with translations
 - A1 level: simple vocabulary, common situations
 

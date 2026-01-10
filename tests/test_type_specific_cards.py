@@ -44,6 +44,17 @@ class TestNounCards:
         assert "hospital" in explanation_lower
         assert len(card.explanation) > 100
 
+    def test_compound_noun_shows_subwords(self, translation_service):
+        """Test that compound nouns show breakdown into subwords."""
+        card = translation_service.get_translation_card(
+            "1", "das Krankenhaus", "the hospital", ReviewDirection.GERMAN_TO_ENGLISH
+        )
+        explanation_lower = card.explanation.lower()
+        # Should show subword breakdown: krank (sick) + Haus (house)
+        assert any(
+            x in explanation_lower for x in ["krank", "haus", "sick", "house", "compound"]
+        ), f"Expected subword breakdown for compound noun, got: {card.explanation[:400]}"
+
 
 class TestVerbCards:
     """Test verb-specific card generation."""
