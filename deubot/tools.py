@@ -25,7 +25,10 @@ def get_tools() -> list[dict[str, Any]]:
             "name": "save_phrases",
             "description": """Save German phrases with English translations to the learning database.
 
-Call this tool immediately when the user provides or asks about concrete German phrase(s). Do not announce intent before calling.
+ALWAYS call this tool BEFORE responding when translating German phrase(s). Examples:
+- "How to say hello?" → save_phrases([{"german": "Hallo", "english": "hello"}])
+- "What does Tisch mean?" → save_phrases([{"german": "der Tisch", "english": "the table"}])
+- "Guten Morgen" → save_phrases([{"german": "Guten Morgen", "english": "good morning"}])
 
 REQUIRED FIELDS:
 Each phrase must have both 'german' and 'english' fields:
@@ -37,14 +40,11 @@ ENGLISH TRANSLATION GUIDELINES:
 - Verbs: use infinitive ("to run", "to eat")
 - Phrases: natural equivalent ("good morning")
 
-ARTICLE HANDLING - CRITICAL:
-German nouns MUST include articles (der/die/das). Capitalized words are almost always nouns.
+ARTICLE HANDLING:
 - "Hund" → save as "der Hund" (add article)
 - "der Tisch" → save as-is (already has article)
 - "Guten Morgen" → save as-is (greeting, no article needed)
-
-When unsure if it's a noun, add the article - better to have it than not.
-Only skip articles for: greetings, verbs, adjectives, adverbs, phrases.
+When unsure, add the article.
 
 BATCH SAVING:
 - Single: save_phrases([{"german": "der Hund", "english": "the dog"}])

@@ -337,3 +337,50 @@ def test_typo_autocorrect(agent: GermanLearningAgent, test_db: PhrasesDB):
     assert not any(
         "krankenhuas" in phrase for phrase in saved_german
     ), f"Typo 'Krankenhuas' should have been corrected, got: {saved_german}"
+
+
+# =============================================================================
+# Additional phrase saving trigger tests - various request formats
+# =============================================================================
+
+
+@pytest.mark.parametrize(
+    "test_message,expected_german",
+    [
+        # Core English→German formats (diverse patterns)
+        ("How to say water?", "Wasser"),
+        ("What's the German for sun?", "Sonne"),
+        ("Translate 'bread' to German", "Brot"),
+        ("Can you translate 'garden' to German?", "Garten"),
+        # German input formats
+        ("Schule", "Schule"),  # bare noun
+        ("What does Schmetterling mean?", "Schmetterling"),
+        ("Was bedeutet Flugzeug?", "Flugzeug"),
+        # Complex/verbose formats
+        ("I want to learn how to say 'please'", "bitte"),
+        ("Just wondering, what's 'tea' in German?", "Tee"),
+        # Edge cases
+        ("dog?", "Hund"),  # minimal
+        ("HOW TO SAY BEAR?", "Bär"),  # caps
+    ],
+)
+def test_phrase_saving_triggers(
+    agent: GermanLearningAgent, test_db: PhrasesDB, test_message: str, expected_german: str
+):
+    """Test that various request formats trigger phrase saving."""
+    # Arrange
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act
+    _ = list(agent.process_message(test_message))
+
+    # Assert - phrase was saved
+    final_count = len(test_db.get_all_phrases())
+    assert final_count > initial_count, f"Phrase was not saved for: '{test_message}'"
+
+    # Check the saved phrase contains expected German word
+    all_phrases = test_db.get_all_phrases()
+    saved_german = [p["german"].lower() for p in all_phrases]
+    assert any(
+        expected_german.lower() in phrase for phrase in saved_german
+    ), f"Expected '{expected_german}' in saved phrases for '{test_message}', got: {saved_german}"
