@@ -235,4 +235,95 @@ Always pass IDs as array of strings: ["42", "123"]. Removal is permanent.
                 "additionalProperties": False,
             },
         },
+        {
+            "type": "function",
+            "name": "update_phrases",
+            "description": """Update German and/or English text for existing vocabulary entries.
+
+Call when user asks to correct, fix, or modify saved phrases.
+
+When to Use:
+- "Change phrase 42 to 'der Hund'" → update_phrases([{"id": "42", "german": "der Hund", "english": null}])
+- "Fix the English for phrase 15 to 'the dog'" → update_phrases([{"id": "15", "german": null, "english": "the dog"}])
+- "Update phrase 10: German 'laufen', English 'to run'" → update_phrases([{"id": "10", "german": "laufen", "english": "to run"}])
+
+Batch Updates:
+- update_phrases([{"id": "1", "german": "der Hund", "english": null}, {"id": "2", "german": null, "english": "the cat"}])
+
+When NOT to Use:
+- User wants to add new phrases → use save_phrases instead
+- User wants to remove phrases → use remove_phrases instead
+- User doesn't know the phrase ID → use get_vocabulary first to find it
+
+Preserves review statistics (ease factor, interval, repetition count) - only updates the text.
+Pass null for fields you want to keep unchanged; at least one must be non-null.
+""",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "updates": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string", "description": "ID of the phrase to update"},
+                                "german": {
+                                    "type": ["string", "null"],
+                                    "description": "New German text, or null to keep unchanged",
+                                },
+                                "english": {
+                                    "type": ["string", "null"],
+                                    "description": "New English translation, or null to keep unchanged",
+                                },
+                            },
+                            "required": ["id", "german", "english"],
+                            "additionalProperties": False,
+                        },
+                        "description": "Array of update objects. Each must have id and at least one non-null text field.",
+                    }
+                },
+                "required": ["updates"],
+                "additionalProperties": False,
+            },
+        },
+        {
+            "type": "function",
+            "name": "get_translation_card",
+            "description": """Generate and display a detailed translation card for a saved phrase.
+
+Call when user explicitly asks for a card, more detail, or elaboration on a phrase AFTER it was saved.
+
+Triggers:
+- "show card", "show me the card", "card for [phrase]"
+- "elaborate", "tell me more about [phrase]"
+- "explain [phrase] in detail"
+
+Parameters:
+- phrase_id: The ID of a saved phrase (use get_vocabulary first if unknown)
+
+Example workflow:
+1. User: "der Tisch" → Agent saves phrase → User: "show card" → get_translation_card(phrase_id="42")
+2. User: "elaborate on Krankenhaus" → get_vocabulary to find ID → get_translation_card(phrase_id="15")
+
+When NOT to Use:
+- Default vocab saving flow (ad-hoc translation is sufficient)
+- User asks for translation without explicitly requesting a card
+- During review sessions (cards are already shown)
+
+Behavior: Card is displayed directly to user. No further response needed.
+""",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "phrase_id": {
+                        "type": "string",
+                        "description": "ID of the saved phrase to generate a card for",
+                    }
+                },
+                "required": ["phrase_id"],
+                "additionalProperties": False,
+            },
+        },
     ]

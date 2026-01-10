@@ -225,6 +225,101 @@ class GermanLearningAgent:
             user_outputs=[MessageOutput(message=user_message)],
         )
 
+    def _execute_get_translation_card(self, arguments: dict[str, Any]) -> ToolCallResult:
+        phrase_id = arguments["phrase_id"]
+
+        if phrase_id not in self.db.phrases:
+            return ToolCallResult(
+                result=f"Phrase ID {phrase_id} not found",
+                needs_llm_followup=True,
+                user_outputs=[],
+            )
+
+        phrase = self.db.phrases[phrase_id]
+        card = self.translation_service.get_translation_card(
+            phrase_id=phrase_id,
+            german=phrase.german,
+            english=phrase.english,
+            direction=ReviewDirection.GERMAN_TO_ENGLISH,
+        )
+
+        message = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}"
+        logger.info(f"Generated translation card for phrase ID {phrase_id}")
+
+        return ToolCallResult(
+            result=f"Translation card displayed for phrase ID {phrase_id}",
+            needs_llm_followup=False,
+            user_outputs=[MessageOutput(message=message)],
+        )
+
+    def _execute_update_phrases(self, arguments: dict[str, Any]) -> ToolCallResult:
+        updates = arguments["updates"]
+        if not isinstance(updates, list):
+            updates = [updates]
+
+        updated_phrases = []
+        not_found_ids = []
+        no_changes_ids = []
+
+        for update in updates:
+            phrase_id = update["id"]
+            german = update.get("german")
+            english = update.get("english")
+
+            if german is None and english is None:
+                no_changes_ids.append(phrase_id)
+                continue
+
+            if phrase_id in self.db.phrases:
+                old_phrase = self.db.phrases[phrase_id]
+                old_german, old_english = old_phrase.german, old_phrase.english
+                self.db.update_phrase(phrase_id, german=german, english=english)
+                updated_phrases.append(
+                    (phrase_id, old_german, old_english, german or old_german, english or old_english)
+                )
+            else:
+                not_found_ids.append(phrase_id)
+
+        user_message_parts = []
+
+        if updated_phrases:
+            if len(updated_phrases) == 1:
+                pid, old_de, old_en, new_de, new_en = updated_phrases[0]
+                user_message_parts.append(f"✓ Updated ID {pid}:")
+                if old_de != new_de:
+                    user_message_parts.append(f"  German: {escape_html(old_de)} → <b>{escape_html(new_de)}</b>")
+                if old_en != new_en:
+                    user_message_parts.append(f"  English: {escape_html(old_en)} → <b>{escape_html(new_en)}</b>")
+            else:
+                user_message_parts.append(f"✓ Updated {len(updated_phrases)} phrases")
+
+        if not_found_ids:
+            if len(not_found_ids) == 1:
+                user_message_parts.append(f"⚠ Phrase ID {not_found_ids[0]} not found")
+            else:
+                user_message_parts.append(f"⚠ {len(not_found_ids)} phrase IDs not found: {', '.join(not_found_ids)}")
+
+        if no_changes_ids:
+            user_message_parts.append(f"⚠ No changes provided for ID(s): {', '.join(no_changes_ids)}")
+
+        user_message = "\n".join(user_message_parts)
+
+        if len(updated_phrases) == 1:
+            result = f"Phrase {updated_phrases[0][0]} updated successfully"
+        elif updated_phrases:
+            result = f"{len(updated_phrases)} phrases updated successfully"
+        else:
+            result = "No phrases were updated"
+
+        if not_found_ids:
+            result += f". {len(not_found_ids)} ID(s) not found: {', '.join(not_found_ids)}"
+
+        return ToolCallResult(
+            result=result,
+            needs_llm_followup=True,
+            user_outputs=[MessageOutput(message=user_message)],
+        )
+
     def _execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> ToolCallResult:
         match tool_name:
             case "save_phrases":
@@ -235,6 +330,10 @@ class GermanLearningAgent:
                 return self._execute_get_vocabulary(arguments)
             case "remove_phrases":
                 return self._execute_remove_phrases(arguments)
+            case "get_translation_card":
+                return self._execute_get_translation_card(arguments)
+            case "update_phrases":
+                return self._execute_update_phrases(arguments)
             case _:
                 return ToolCallResult(result="Unknown tool", needs_llm_followup=False, user_outputs=[])
 

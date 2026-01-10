@@ -222,3 +222,32 @@ class PhrasesDB:
             self._save()
 
         return removed_ids, not_found_ids
+
+    def update_phrase(self, phrase_id: str, german: str | None = None, english: str | None = None) -> bool:
+        """Update German and/or English text for an existing phrase, preserving review stats.
+
+        Args:
+            phrase_id: ID of the phrase to update
+            german: New German text (optional)
+            english: New English translation (optional)
+
+        Returns:
+            True if phrase was found and updated, False if not found
+        """
+        if phrase_id not in self.phrases:
+            logger.warning(f"Phrase with ID {phrase_id} not found for update")
+            return False
+
+        phrase = self.phrases[phrase_id]
+        old_german, old_english = phrase.german, phrase.english
+
+        if german is not None:
+            phrase.german = german
+        if english is not None:
+            phrase.english = english
+
+        logger.info(
+            f"Updated phrase {phrase_id}: '{old_german}' → '{phrase.german}', '{old_english}' → '{phrase.english}'"
+        )
+        self._save()
+        return True
