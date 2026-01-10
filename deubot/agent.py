@@ -133,7 +133,21 @@ class GermanLearningAgent:
 
     def _execute_start_review(self, arguments: dict[str, Any]) -> ToolCallResult:
         direction = ReviewDirection(arguments.get("direction", "english_to_german"))
-        phrases = self.db.get_due_phrases(limit=40)
+        phrase_ids = arguments.get("phrase_ids")
+
+        if phrase_ids:
+            phrases, not_found = self.db.get_phrases_by_ids(phrase_ids)
+            if not_found:
+                logger.warning(f"Phrase IDs not found for review: {not_found}")
+            if not phrases:
+                return ToolCallResult(
+                    result=f"None of the specified phrase IDs were found: {not_found}",
+                    needs_llm_followup=True,
+                    user_outputs=[],
+                )
+        else:
+            phrases = self.db.get_due_phrases(limit=40)
+
         if not phrases:
             logger.info("No phrases due for review")
             return ToolCallResult(result="No phrases due for review", needs_llm_followup=True, user_outputs=[])

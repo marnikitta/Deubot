@@ -122,14 +122,27 @@ Direction parameter:
 - "german_to_english": Show German word, recall English meaning
 - "mixed": Randomly mix German→English and English→German cards
 
+Phrase selection:
+- Default (phrase_ids=null): Fetches up to 40 phrases due for review via SM-2 algorithm
+- With phrase_ids: Reviews exactly those phrases, regardless of due date
+
 Examples:
-- "review" → start_review() (uses english_to_german)
-- "quiz me on German" or "test my German production" → start_review(direction="english_to_german")
+- "review" → start_review(direction="english_to_german") (default, due phrases)
+- "quiz me on German" → start_review(direction="english_to_german")
 - "practice translating to English" → start_review(direction="german_to_english")
-- "mixed review" or "both directions" → start_review(direction="mixed")
+- "mixed review" → start_review(direction="mixed")
+
+Targeted review workflow (for requests like "review my hardest words", "practice nouns"):
+1. get_vocabulary(...) to analyze/filter vocabulary (e.g., sort_by="proficiency", ascending=True for hardest)
+2. start_review(phrase_ids=[...]) with selected IDs from step 1
+
+Targeted examples:
+- "Review my hardest words" → get_vocabulary(sort_by="proficiency", ascending=True, limit=20) → start_review(phrase_ids=[IDs])
+- "Practice newest 10 words" → get_vocabulary(sort_by="id", ascending=False, limit=10) → start_review(phrase_ids=[IDs])
 
 Behavior:
-1. Fetches up to 40 phrases due for review from the database
+1. If phrase_ids provided: fetches those specific phrases
+   If phrase_ids omitted: fetches up to 40 phrases due for review
 2. Generates translation cards for each phrase automatically
 3. Presents cards one by one to the user
 4. User rates each card; bot handles the review flow locally
@@ -151,9 +164,14 @@ When NOT to Use:
                         "type": "string",
                         "enum": ["german_to_english", "english_to_german", "mixed"],
                         "description": "Review direction. 'english_to_german' shows English and tests German production (default). 'german_to_english' shows German and tests English recall. 'mixed' randomly alternates between directions.",
-                    }
+                    },
+                    "phrase_ids": {
+                        "type": ["array", "null"],
+                        "items": {"type": "string"},
+                        "description": "Phrase IDs to review. Null = use SM-2 scheduling (default).",
+                    },
                 },
-                "required": ["direction"],
+                "required": ["direction", "phrase_ids"],
                 "additionalProperties": False,
             },
         },

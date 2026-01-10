@@ -160,6 +160,16 @@ class PhrasesDB:
             return due_phrases[:limit]
         return due_phrases
 
+    def get_phrases_by_ids(self, phrase_ids: list[str]) -> tuple[list[dict[str, Any]], list[str]]:
+        """Fetch phrases by ID. Returns (found_phrases, not_found_ids)."""
+        found, not_found = [], []
+        for pid in phrase_ids:
+            if pid in self.phrases:
+                found.append(asdict(self.phrases[pid]))
+            else:
+                not_found.append(pid)
+        return found, not_found
+
     def get_vocabulary(
         self, limit: int = 100, sort_by: Literal["alphabetical", "proficiency", "id"] = "id", ascending: bool = True
     ) -> list[dict[str, Any]]:

@@ -111,3 +111,44 @@ def test_update_phrase_nonexistent(temp_db):
 
     assert result is False
     assert len(temp_db.phrases) == 1
+
+
+def test_get_phrases_by_ids_all_found(temp_db):
+    """get_phrases_by_ids should return all phrases when all IDs exist."""
+    temp_db.add_phrase("der Hund", "the dog")
+    temp_db.add_phrase("die Katze", "the cat")
+
+    found, not_found = temp_db.get_phrases_by_ids(["1", "2"])
+
+    assert len(found) == 2
+    assert len(not_found) == 0
+    assert {p["id"] for p in found} == {"1", "2"}
+
+
+def test_get_phrases_by_ids_some_not_found(temp_db):
+    """get_phrases_by_ids should return found phrases and list missing IDs."""
+    temp_db.add_phrase("der Hund", "the dog")
+
+    found, not_found = temp_db.get_phrases_by_ids(["1", "999", "2"])
+
+    assert len(found) == 1
+    assert found[0]["id"] == "1"
+    assert set(not_found) == {"999", "2"}
+
+
+def test_get_phrases_by_ids_none_found(temp_db):
+    """get_phrases_by_ids should return empty list when no IDs exist."""
+    found, not_found = temp_db.get_phrases_by_ids(["1", "2", "3"])
+
+    assert len(found) == 0
+    assert set(not_found) == {"1", "2", "3"}
+
+
+def test_get_phrases_by_ids_empty_list(temp_db):
+    """get_phrases_by_ids with empty list should return empty results."""
+    temp_db.add_phrase("der Hund", "the dog")
+
+    found, not_found = temp_db.get_phrases_by_ids([])
+
+    assert len(found) == 0
+    assert len(not_found) == 0
