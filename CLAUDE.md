@@ -180,3 +180,11 @@ Configuration via `.env` file (see `.env.example`):
 - Follow the Rule of Three for logging: log at operation start, significant progress milestones, and completion (success or failure). Include relevant context directly in log messages
 - Keep the specific tool calls examples in the tools.py rather than system prompt
 - When fixing LLM behavior, prefer minimal prompt changes with concrete examples over verbose explanations. One example like `"schwimme" → "schwimmen"` beats paragraphs of rules
+
+## After Prompt/Tool Description Changes
+
+When making significant changes to prompts or tool descriptions:
+
+1. **Run prompt-hygiene-reviewer**: After changing `system_prompt.md` or tool descriptions in `tools.py`, run the prompt-hygiene-reviewer agent to analyze only the new changes for consistency and proper separation of concerns.
+
+2. **Write tests for new behavior**: When adding new logic or behavior, add tests to verify expected functionality. For LLM behavior, add tests in appropriate test files (e.g., `tests/test_tool_selection.py`, `tests/test_phrase_saving.py`).

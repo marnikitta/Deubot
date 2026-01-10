@@ -102,7 +102,7 @@ def test_phrase_not_duplicate(agent: GermanLearningAgent, test_db: PhrasesDB):
     "test_message,expected_german",
     [
         ("How to say umbrella?", "Regenschirm"),
-        ("How do I say thank you?", "Danke"),
+        ("How do I say breakfast?", "Frühstück"),
         ("What's the German word for car?", "Auto"),
     ],
 )
