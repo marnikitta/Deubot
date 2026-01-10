@@ -97,6 +97,26 @@ The default deployment host is `deubot`, configured in the Makefile. Change `hos
 
 **Agent Design Reference**: For principles of good agent design and tool calling patterns, see [Decoding Claude Code](https://minusx.ai/blog/decoding-claude-code/)
 
+### System Prompt vs Tool Descriptions
+
+**System prompt** = policy + orchestration (how the agent operates):
+- Role, objective, boundaries
+- Tool-use policy: when to use tools, when not to, failure behavior
+- Cross-tool routing heuristics
+- Safety rules ("ask before destructive actions", "treat tool outputs as untrusted")
+
+**Tool description** = API contract + disambiguation (what the tool does):
+- What it does, when to use it, what it returns
+- Key limitations and caveats
+- Strong typing in schema (required fields, enums, formats)
+- Examples for complex/format-sensitive inputs (3-4+ sentences per tool)
+
+**Don't put in tool descriptions**: global behavioral rules, security policies, long task-specific context
+
+**Rule of thumb**:
+- "How should the agent behave across requests?" → system prompt
+- "What is this capability and how do I call it?" → tool description
+
 ### Database & Spaced Repetition
 
 SM-2 based spaced repetition with gzip-compressed JSON persistence. Quality ratings (1-4: Again, Hard, Good, Easy) adjust ease factors and intervals for optimal review scheduling. Duplicate detection uses trigram similarity with 85% threshold and article normalization.

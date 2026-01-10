@@ -59,6 +59,28 @@ Save canonical form only:
 - Nouns: "der Arzt" not both "der Arzt" and "die Ärztin"
 - Verbs: infinitive only. "schwimme" → save "schwimmen" (not "schwimmen, ich schwimme")
 
+VOCABULARY TYPE EXAMPLES:
+
+Nouns (always with article):
+- {"german": "der Tisch", "english": "the table"}
+- {"german": "die Katze", "english": "the cat"}
+
+Verbs (infinitive only):
+- {"german": "fahren", "english": "to drive"}
+- User says "ich fahre" → save as "fahren"
+
+Chunks (fixed phrases, use ... for slots):
+- {"german": "Ich möchte...", "english": "I would like..."}
+- {"german": "Kann ich ... haben?", "english": "Can I have...?"}
+- {"german": "Es gibt...", "english": "There is/are..."}
+
+Prepositions (just the word):
+- {"german": "mit", "english": "with"}
+- {"german": "für", "english": "for"}
+
+Sentence Templates (full example):
+- {"german": "Ich fahre morgen mit dem Bus nach Berlin", "english": "I'm going to Berlin by bus tomorrow"}
+
 TYPO HANDLING:
 Auto-correct obvious typos ("Krankenhuas" → "das Krankenhaus"). Ask if ambiguous.
 """,

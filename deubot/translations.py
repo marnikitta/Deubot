@@ -18,35 +18,166 @@ class ReviewDirection(str, Enum):
     MIXED = "mixed"
 
 
-TRANSLATION_PROMPT = """Generate a comprehensive learning card for the German phrase provided by the user.
+TRANSLATION_PROMPT = """Generate a learning card for the German phrase. First detect the vocabulary type, then use the matching template.
 
-Rules:
+TYPE DETECTION:
+- NOUN: Starts with der/die/das, OR single capitalized German word
+- VERB: Infinitive ending -en/-ern/-eln (lowercase)
+- CHUNK: Contains ... placeholder OR multi-word phrase like "Ich möchte", "Es gibt"
+- PREPOSITION: Single short word: mit, für, bei, nach, von, zu, an, auf, in, aus, etc.
+- SENTENCE: Complete sentence with subject + conjugated verb
+
+RULES:
 - Use HTML tags: <b>, <i> only
-- Don't include original phrase as a header. Start with translation
-- Keep it dense – this is a flashcard, not a lecture
-- For compound words, show the subwords
-- Provide 2 example sentences with translations
-- Grammar section: plural, gender forms, or other relevant notes (case usage, irregular forms, etc.). Keep it short
+- Start with translation, not original phrase
+- Keep it dense – flashcard, not lecture
+- 2 example sentences with translations
+- A1 level: simple vocabulary, common situations
 
-Follow this exact format (example for "das Handtuch"):
-<b>towel</b>
+---
+NOUN (der/die/das + word):
 
-<b>Pronunciation:</b>
-IPA: /ˈhanttuːx/
-Approx: HANT-tookh
+<b>[English]</b>
 
-Compound: die Hand (hand) + das Tuch (cloth). Everyday item, found in every household.
+<b>Pronunciation:</b> /IPA/ (approx)
 
-<b>Usage:</b>
-- Bathroom, kitchen, beach
-- "Handtuch werfen" = to throw in the towel (give up)
+<b>Plural:</b> die [plural form]
 
 <b>Examples:</b>
-1. Gibst du mir bitte das Handtuch? – Can you pass me the towel?
-2. Die Handtücher sind im Schrank. – The towels are in the closet.
+1. [German] - [English]
+2. [German] - [English]
 
-<b>Grammar:</b>
-Plural: die Handtücher (umlaut a→ä)
+Example for "der Tisch":
+<b>table</b>
+
+<b>Pronunciation:</b> /tɪʃ/ (TISH)
+
+<b>Plural:</b> die Tische
+
+<b>Examples:</b>
+1. Der Tisch ist groß. - The table is big.
+2. Ich sitze am Tisch. - I sit at the table.
+
+---
+VERB - show conjugation for irregular/stem-changing, examples for regular:
+
+<b>[English translation]</b>
+
+<b>Pronunciation:</b> /IPA/ (approx)
+
+[For irregular: ich [form], du [form], er [form] + note about stem change]
+[For regular: Regular conjugation + skip explicit forms]
+
+<b>Examples:</b>
+1. [German] - [English]
+2. [German] - [English]
+
+Example for "fahren" (irregular):
+<b>to drive, to go (by vehicle)</b>
+
+<b>Pronunciation:</b> /ˈfaːʁən/ (FAH-ren)
+
+ich fahre, du f<b>ä</b>hrst, er f<b>ä</b>hrt
+(stem change: a → ä)
+
+<b>Examples:</b>
+1. Ich fahre mit dem Bus. - I go by bus.
+2. Er fährt nach Berlin. - He drives to Berlin.
+
+Example for "spielen" (regular):
+<b>to play</b>
+
+<b>Pronunciation:</b> /ˈʃpiːlən/ (SHPEE-len)
+
+Regular: -e, -st, -t, -en, -t, -en
+
+<b>Examples:</b>
+1. Die Kinder spielen im Garten. - The children play in the garden.
+2. Spielst du Fußball? - Do you play soccer?
+
+---
+CHUNK (fixed phrase with ... or grammar baked in):
+
+<b>[English equivalent]</b>
+
+<b>Usage:</b> [when/how to use, 1-2 sentences]
+
+<b>Variations:</b>
+- [variation 1] - [meaning]
+- [variation 2] - [meaning]
+
+<b>Examples:</b>
+1. [German] - [English]
+2. [German] - [English]
+
+Example for "Ich möchte...":
+<b>I would like...</b>
+
+<b>Usage:</b> Polite requests. More polite than "Ich will" (I want).
+
+<b>Variations:</b>
+- Ich möchte bitte... - I would like please...
+- Ich möchte gern... - I would really like...
+
+<b>Examples:</b>
+1. Ich möchte einen Kaffee. - I would like a coffee.
+2. Ich möchte bezahlen. - I would like to pay.
+
+---
+PREPOSITION:
+
+<b>[English]</b>
+
+<b>Case:</b> + [Dativ/Akkusativ]
+
+<b>Uses:</b>
+- [common use 1]: [example phrase]
+- [common use 2]: [example phrase]
+
+<b>Examples:</b>
+1. [German with article showing case] - [English]
+2. [German with article showing case] - [English]
+
+Example for "mit":
+<b>with</b>
+
+<b>Case:</b> + Dativ
+
+<b>Uses:</b>
+- accompaniment: mit meinem Freund (with my friend)
+- transport: mit dem Bus (by bus)
+
+<b>Examples:</b>
+1. Ich gehe mit <b>dem</b> Hund. - I go with the dog. (der→dem)
+2. Ich fahre mit <b>der</b> Bahn. - I go by train. (die→der)
+
+---
+SENTENCE TEMPLATE:
+
+<b>[English translation]</b>
+
+<b>Pattern:</b> [word order rule name]
+[1-line explanation of the pattern]
+
+<b>Structure:</b>
+[Break down: Subject + Verb + TIME + MANNER + PLACE or similar]
+
+<b>Variations:</b>
+1. [German variation] - [English]
+2. [German variation] - [English]
+
+Example for "Ich fahre morgen mit dem Bus nach Berlin":
+<b>I'm going to Berlin by bus tomorrow</b>
+
+<b>Pattern:</b> Time-Manner-Place
+German puts WHEN before HOW before WHERE (unlike English).
+
+<b>Structure:</b>
+Ich fahre + morgen (when) + mit dem Bus (how) + nach Berlin (where)
+
+<b>Variations:</b>
+1. Morgen fahre ich nach Berlin. - Tomorrow I go to Berlin. (verb stays 2nd)
+2. Ich fahre heute mit dem Zug nach München. - I go to Munich by train today.
 """
 
 

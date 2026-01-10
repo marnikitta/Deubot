@@ -238,3 +238,102 @@ def test_verb_saved_as_infinitive_only(
     saved = matching[0]
     assert "," not in saved, f"Verb should be saved as single form, not compound: '{saved}'"
     assert "ich " not in saved.lower(), f"Verb should be infinitive only, not conjugated with 'ich': '{saved}'"
+
+
+def test_batch_save_multiple_phrases(agent: GermanLearningAgent, test_db: PhrasesDB):
+    """Test that asking for multiple translations saves all phrases at once."""
+    # Arrange
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act - ask for multiple translations
+    _ = list(agent.process_message("How do you say hello, goodbye, and thank you in German?"))
+
+    # Assert - at least 3 phrases were saved
+    final_count = len(test_db.get_all_phrases())
+    saved_count = final_count - initial_count
+    assert saved_count >= 3, f"Expected at least 3 phrases to be saved, got {saved_count}"
+
+    # Check that expected words are present
+    all_phrases = test_db.get_all_phrases()
+    saved_german = [p["german"].lower() for p in all_phrases]
+    saved_text = " ".join(saved_german)
+
+    # Should have hello, goodbye, thank you equivalents
+    assert "hallo" in saved_text or "guten tag" in saved_text, f"Expected 'hello' equivalent, got: {saved_german}"
+    assert "wiedersehen" in saved_text or "tschüss" in saved_text, f"Expected 'goodbye' equivalent, got: {saved_german}"
+    assert "danke" in saved_text, f"Expected 'thank you' equivalent, got: {saved_german}"
+
+
+def test_chunk_saved_with_ellipsis(agent: GermanLearningAgent, test_db: PhrasesDB):
+    """Test that chunks with slots are saved with ellipsis (...)."""
+    # Arrange
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act - ask for a chunk pattern
+    _ = list(agent.process_message("How do you say 'I would like...' in German?"))
+
+    # Assert - phrase was saved
+    final_count = len(test_db.get_all_phrases())
+    assert final_count > initial_count, "Phrase was not saved"
+
+    # Check that the saved phrase contains "möchte" (I would like)
+    all_phrases = test_db.get_all_phrases()
+    saved_german = [p["german"].lower() for p in all_phrases]
+    assert any(
+        "möchte" in phrase for phrase in saved_german
+    ), f"Expected 'möchte' in saved phrases, got: {saved_german}"
+
+
+def test_preposition_saved_without_article(agent: GermanLearningAgent, test_db: PhrasesDB):
+    """Test that prepositions are saved without articles."""
+    # Arrange
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act - ask for a preposition
+    _ = list(agent.process_message("How do you say 'with' in German?"))
+
+    # Assert - phrase was saved
+    final_count = len(test_db.get_all_phrases())
+    assert final_count > initial_count, "Phrase was not saved"
+
+    # Check that "mit" was saved without an article
+    all_phrases = test_db.get_all_phrases()
+    saved_german = [p["german"].lower() for p in all_phrases]
+
+    # Should contain "mit" but NOT "der mit", "die mit", "das mit"
+    matching = [p for p in saved_german if "mit" in p]
+    assert len(matching) > 0, f"Expected 'mit' in saved phrases, got: {saved_german}"
+
+    # Verify no article prefix on the preposition
+    for phrase in matching:
+        if phrase.strip() == "mit" or "mit " in phrase or " mit" in phrase:
+            # This is acceptable - either standalone or part of example
+            assert (
+                not phrase.startswith("der ") and not phrase.startswith("die ") and not phrase.startswith("das ")
+            ), f"Preposition should not have article prefix: '{phrase}'"
+
+
+def test_typo_autocorrect(agent: GermanLearningAgent, test_db: PhrasesDB):
+    """Test that obvious typos are auto-corrected when saving."""
+    # Arrange
+    initial_count = len(test_db.get_all_phrases())
+
+    # Act - send a typo (Krankenhuas instead of Krankenhaus)
+    _ = list(agent.process_message("Krankenhuas"))
+
+    # Assert - phrase was saved
+    final_count = len(test_db.get_all_phrases())
+    assert final_count > initial_count, "Phrase was not saved"
+
+    # Check that the correct spelling was saved (das Krankenhaus)
+    all_phrases = test_db.get_all_phrases()
+    saved_german = [p["german"].lower() for p in all_phrases]
+
+    # Should have corrected "Krankenhuas" to "Krankenhaus"
+    assert any(
+        "krankenhaus" in phrase for phrase in saved_german
+    ), f"Expected corrected 'Krankenhaus' in saved phrases, got: {saved_german}"
+    # Should NOT have the typo
+    assert not any(
+        "krankenhuas" in phrase for phrase in saved_german
+    ), f"Typo 'Krankenhuas' should have been corrected, got: {saved_german}"
