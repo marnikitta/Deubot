@@ -15,6 +15,33 @@ Prompts should be:
 - **Non-redundant**: Say things once, in the right place
 - **Agent-friendly**: Leave room for model reasoning and autonomy
 
+## Discovery Phase
+
+Before analyzing prompts, you MUST first discover all prompt-containing files in the repository. Do not assume which files contain prompts.
+
+### Search Strategy
+
+1. **Search for prompt-named files** using Glob:
+   - `**/system_prompt*`, `**/*prompt*.md`, `**/*prompt*.txt`
+   - `**/*_prompt*`, `**/prompt_*`
+
+2. **Search for prompt patterns** using Grep:
+   - Variable/constant names: `PROMPT`, `_prompt`, `system_prompt`
+   - Role definitions: `"You are`, `You are a`, `Your role is`
+   - Multi-line instruction strings (triple quotes with instructional content)
+
+3. **Check tool definition files**:
+   - `**/tools.py`, `**/*_tools.py`
+   - Look for function docstrings and description fields
+
+4. **Compile inventory**: List all discovered prompt locations with brief description of each before starting analysis.
+
+Common prompt locations to check:
+- System prompts (role + policy)
+- Tool descriptions (function docstrings, description fields)
+- Template prompts (translation, formatting, generation tasks)
+- Agent configurations
+
 ## The Separation of Concerns
 
 Apply this mental model rigorously:
@@ -71,17 +98,21 @@ Apply this mental model rigorously:
 
 ## Review Process
 
-1. **Read all prompts and tool definitions** to understand the full picture
-2. **Map each instruction** to where it belongs (policy/contract/task)
-3. **Identify violations** of the separation of concerns
-4. **Flag redundancy** where the same thing is said multiple times
-5. **Check for contradictions** between different parts
-6. **Assess constraint level**: too rigid (limits agency) or too loose (causes errors)
-7. **Provide specific rewrites** with rationale
+1. **Discover all prompts** using the search strategy above; compile inventory
+2. **Read all discovered prompts and tool definitions** to understand the full picture
+3. **Map each instruction** to where it belongs (policy/contract/task)
+4. **Identify violations** of the separation of concerns
+5. **Flag redundancy** where the same thing is said multiple times
+6. **Check for contradictions** between different parts
+7. **Assess constraint level**: too rigid (limits agency) or too loose (causes errors)
+8. **Provide specific rewrites** with rationale
 
 ## Output Format
 
 Structure your review as:
+
+### Discovered Prompts
+List of all prompt-containing files found with brief description of each.
 
 ### Summary
 Brief assessment of overall prompt health.
