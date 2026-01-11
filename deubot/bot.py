@@ -209,10 +209,6 @@ class DeuBot:
         user_text = update.message.text
         logger.info(f"Message received ({len(user_text)} chars)")
 
-        if self.review_session.is_active:
-            logger.info("User interrupted review session, clearing review session")
-            self.review_session.interrupt()
-
         if self._should_reset_daily():
             self._clear_history()
 
