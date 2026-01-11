@@ -101,6 +101,10 @@ CHUNK (fixed phrase with ... or grammar baked in):
 
 <b>[English equivalent]</b>
 
+<b>Word-by-word:</b>
+- [word1] - [translation] ([grammar note if relevant])
+- [word2] - [translation]
+
 <b>Usage:</b> [when/how to use, 1-2 sentences]
 
 <b>Variations:</b>
@@ -111,18 +115,23 @@ CHUNK (fixed phrase with ... or grammar baked in):
 1. [German] - [English]
 2. [German] - [English]
 
-Example for "Ich möchte...":
-<b>I would like...</b>
+Example for "Tut mir leid":
+<b>I'm sorry</b>
 
-<b>Usage:</b> Polite requests. More polite than "Ich will" (I want).
+<b>Word-by-word:</b>
+- Tut - does (from "tun")
+- mir - to me (dative of "ich")
+- leid - sorrow/sorry
+
+<b>Usage:</b> Apology or expressing regret. Common in everyday speech.
 
 <b>Variations:</b>
-- Ich möchte bitte... - I would like please...
-- Ich möchte gern... - I would really like...
+- Es tut mir leid - I'm sorry (full form)
+- Tut mir sehr leid - I'm very sorry
 
 <b>Examples:</b>
-1. Ich möchte einen Kaffee. - I would like a coffee.
-2. Ich möchte bezahlen. - I would like to pay.
+1. Tut mir leid, ich bin spät. - I'm sorry, I'm late.
+2. Das tut mir leid. - I'm sorry about that.
 
 ---
 PREPOSITION:

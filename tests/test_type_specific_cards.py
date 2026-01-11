@@ -133,6 +133,21 @@ class TestChunkCards:
             x in explanation_lower for x in ["can", "have", "request", "ask"]
         ), f"Expected question chunk explanation, got: {card.explanation[:300]}"
 
+    def test_chunk_shows_word_by_word(self, translation_service):
+        """Test that chunk cards include word-by-word breakdown."""
+        card = translation_service.get_translation_card(
+            "1", "Tut mir leid", "I'm sorry", ReviewDirection.GERMAN_TO_ENGLISH
+        )
+        explanation_lower = card.explanation.lower()
+        # Should break down each word
+        assert any(
+            x in explanation_lower for x in ["word-by-word", "word by word"]
+        ), f"Expected word-by-word section, got: {card.explanation[:400]}"
+        # Should mention the individual words
+        assert (
+            "tut" in explanation_lower and "mir" in explanation_lower and "leid" in explanation_lower
+        ), f"Expected breakdown of tut, mir, leid, got: {card.explanation[:400]}"
+
 
 class TestPrepositionCards:
     """Test preposition card generation."""
