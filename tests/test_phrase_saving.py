@@ -48,31 +48,29 @@ def test_phrase_saving_outputs_confirmation(agent: GermanLearningAgent):
     ), f"Expected confirmation for 'Regenschirm', got: {confirmation_messages[0]}"
 
 
-def test_phrase_saving_continues_with_translation(agent: GermanLearningAgent):
-    """Test that after saving, the agent continues with the translation."""
+def test_phrase_saving_shows_translation_card(agent: GermanLearningAgent):
+    """Test that after saving, the agent shows a translation card."""
     # Arrange
     test_message = "How to say table?"
 
     # Act
     outputs = list(agent.process_message(test_message))
 
-    # Assert - check we got both confirmation and translation
+    # Assert - check we got both confirmation and translation card
     message_outputs = [o for o in outputs if isinstance(o, MessageOutput)]
 
-    assert (
-        len(message_outputs) >= 2
-    ), f"Expected at least 2 messages (confirmation + translation), got {len(message_outputs)}"
+    assert len(message_outputs) >= 2, f"Expected at least 2 messages (confirmation + card), got {len(message_outputs)}"
 
     # First should be confirmation
     assert "✓ Saved:" in message_outputs[0].message, "First message should be confirmation"
 
-    # Second should be translation (not just confirmation)
-    translation_message = message_outputs[1].message
-    assert len(translation_message) > 10, "Translation message should contain content"
-    # Check it's actually a translation (contains German text and/or English explanation)
-    assert (
-        "tisch" in translation_message.lower() or "table" in translation_message.lower()
-    ), "Should contain translation content"
+    # Second should be translation card (contains structured content with bold formatting)
+    card_message = message_outputs[1].message
+    assert "<b>" in card_message, "Card should contain bold formatting"
+    # Check for card structure (pronunciation, examples, plural, etc.)
+    assert any(
+        kw in card_message.lower() for kw in ["pronunciation", "examples", "plural"]
+    ), f"Card should contain structured content like pronunciation/examples/plural, got: {card_message[:200]}"
 
 
 def test_phrase_not_duplicate(agent: GermanLearningAgent, test_db: PhrasesDB):

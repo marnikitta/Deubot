@@ -240,30 +240,37 @@ class GermanLearningAgent:
         )
 
     def _execute_get_translation_card(self, arguments: dict[str, Any]) -> ToolCallResult:
-        phrase_id = arguments["phrase_id"]
+        phrase_ids = arguments["phrase_ids"]
+        if not isinstance(phrase_ids, list):
+            phrase_ids = [phrase_ids]
 
-        if phrase_id not in self.db.phrases:
+        not_found = [pid for pid in phrase_ids if pid not in self.db.phrases]
+        if not_found:
             return ToolCallResult(
-                result=f"Phrase ID {phrase_id} not found",
+                result=f"Phrase IDs not found: {', '.join(not_found)}",
                 needs_llm_followup=True,
                 user_outputs=[],
             )
 
-        phrase = self.db.phrases[phrase_id]
-        card = self.translation_service.get_translation_card(
-            phrase_id=phrase_id,
-            german=phrase.german,
-            english=phrase.english,
-            direction=ReviewDirection.GERMAN_TO_ENGLISH,
+        phrases = [
+            {"id": pid, "german": self.db.phrases[pid].german, "english": self.db.phrases[pid].english}
+            for pid in phrase_ids
+        ]
+
+        cards = self.translation_service.get_translation_cards_parallel(
+            phrases, direction=ReviewDirection.GERMAN_TO_ENGLISH
         )
 
-        message = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}"
-        logger.info(f"Generated translation card for phrase ID {phrase_id}")
+        user_outputs: list[UserOutput] = [
+            MessageOutput(message=f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}") for card in cards
+        ]
+
+        logger.info(f"Generated {len(cards)} translation card(s) for phrase IDs: {phrase_ids}")
 
         return ToolCallResult(
-            result=f"Translation card displayed for phrase ID {phrase_id}",
+            result=f"Translation cards displayed for {len(cards)} phrase(s)",
             needs_llm_followup=False,
-            user_outputs=[MessageOutput(message=message)],
+            user_outputs=user_outputs,
         )
 
     def _execute_update_phrases(self, arguments: dict[str, Any]) -> ToolCallResult:

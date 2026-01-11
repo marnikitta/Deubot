@@ -224,11 +224,17 @@ class DeuBot:
             await update.message.reply_text(f"Fehler / Error: {str(e)}")
             raise
 
-    async def post_init(self, _: Application) -> None:
+    async def post_init(self, application: Application) -> None:
         logger.info("Bot initialized successfully")
         notify_socket = os.getenv("NOTIFY_SOCKET")
         if notify_socket:
             notify_systemd(notify_socket)
+
+        await application.bot.send_message(
+            chat_id=self.allowed_user_id,
+            text="Der Bot wurde neu gestartet.\n<i>The bot has been restarted.</i>",
+            parse_mode="HTML",
+        )
 
     def run(self) -> None:
         application = Application.builder().token(self.token).post_init(self.post_init).build()

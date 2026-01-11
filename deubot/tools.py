@@ -308,39 +308,30 @@ Pass null for fields you want to keep unchanged; at least one must be non-null.
         {
             "type": "function",
             "name": "get_translation_card",
-            "description": """Generate and display a detailed translation card for a saved phrase.
+            "description": """Generate and display translation cards for saved phrases.
 
-Call when user explicitly asks for a card, more detail, or elaboration on a phrase AFTER it was saved.
+Shows detailed cards with grammar notes, examples, and usage context.
 
-Triggers:
-- "show card", "show me the card", "card for [phrase]"
-- "elaborate", "tell me more about [phrase]"
-- "explain [phrase] in detail"
-
-Parameters:
-- phrase_id: The ID of a saved phrase (use get_vocabulary first if unknown)
-
-Example workflow:
-1. User: "der Tisch" → Agent saves phrase → User: "show card" → get_translation_card(phrase_id="42")
-2. User: "elaborate on Krankenhaus" → get_vocabulary to find ID → get_translation_card(phrase_id="15")
+When to Use:
+- After save_phrases succeeds (pass returned IDs)
+- When user asks for elaboration: "show card", "tell me more about [phrase]"
 
 When NOT to Use:
-- Default vocab saving flow (ad-hoc translation is sufficient)
-- User asks for translation without explicitly requesting a card
-- During review sessions (cards are already shown)
+- During review sessions (cards already shown there)
 
-Behavior: Card is displayed directly to user. No further response needed.
+Behavior: Cards displayed directly. No further response needed.
 """,
             "strict": True,
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "phrase_id": {
-                        "type": "string",
-                        "description": "ID of the saved phrase to generate a card for",
+                    "phrase_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of phrase IDs to generate cards for",
                     }
                 },
-                "required": ["phrase_id"],
+                "required": ["phrase_ids"],
                 "additionalProperties": False,
             },
         },
