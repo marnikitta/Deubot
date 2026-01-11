@@ -138,6 +138,8 @@ PREPOSITION:
 
 <b>[English]</b>
 
+<b>Pronunciation:</b> /IPA/ (approx)
+
 <b>Case:</b> + [Dativ/Akkusativ]
 
 <b>Uses:</b>
@@ -150,6 +152,8 @@ PREPOSITION:
 
 Example for "mit":
 <b>with</b>
+
+<b>Pronunciation:</b> /mɪt/ (MIT)
 
 <b>Case:</b> + Dativ
 
