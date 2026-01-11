@@ -205,7 +205,7 @@ Ease factor: <2.0 difficult, 2.0-2.8 average, >2.8 well-known.
                 "properties": {
                     "limit": {
                         "type": "integer",
-                        "description": "Maximum number of phrases to return. Default: 100. Maximum: 2000. Use 2000 for full analysis, 30-50 for sentence creation, 100 for general viewing.",
+                        "description": "Maximum number of phrases to return. Default: 200. Maximum: 2000. Use 2000 for full analysis, 30-50 for sentence creation, 200 for general viewing.",
                     },
                     "sort_by": {
                         "type": "string",
