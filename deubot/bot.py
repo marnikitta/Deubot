@@ -196,13 +196,9 @@ class DeuBot:
             if next_card:
                 await self._show_review_card(query.message, next_card)
             else:
-                await query.message.reply_text(
-                    "Alle Karten geprüft! Gut gemacht!\n"
-                    "<i>All cards reviewed! Well done!</i>\n\n"
-                    "Sage /review um eine weitere Sitzung zu starten.\n"
-                    "<i>Say /review to start another session.</i>",
-                    parse_mode="HTML",
-                )
+                # Let agent handle the post-review conversation
+                outputs = self.agent.process_message("I just finished reviewing all the cards.")
+                await self._handle_outputs(query.message, outputs)
         except Exception as e:
             await query.message.reply_text(f"Error: {str(e)}")
 
