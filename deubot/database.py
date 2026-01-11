@@ -1,6 +1,7 @@
 import gzip
 import json
 import logging
+import random
 import unicodedata
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -155,6 +156,9 @@ class PhrasesDB:
         if not due_phrases and self.phrases:
             sorted_phrases = sorted(self.phrases.values(), key=lambda p: p.next_review if p.next_review else "")
             due_phrases = [asdict(phrase) for phrase in sorted_phrases]
+
+        # Shuffle to mix old and new cards, avoid predictable topic groupings
+        random.shuffle(due_phrases)
 
         if limit is not None:
             return due_phrases[:limit]

@@ -66,7 +66,7 @@ VERB - show conjugation for irregular/stem-changing, examples for regular:
 
 <b>Pronunciation:</b> /IPA/ (approx)
 
-[For irregular: ich [form], du [form], er [form] + note about stem change]
+[For irregular: ich [form], du [form], er/sie/es [form], wir [form], ihr [form], sie/Sie [form] + note about stem change]
 [For regular: Regular conjugation + skip explicit forms]
 
 <b>Examples:</b>
@@ -78,8 +78,8 @@ Example for "fahren" (irregular):
 
 <b>Pronunciation:</b> /ˈfaːʁən/ (FAH-ren)
 
-ich fahre, du f<b>ä</b>hrst, er f<b>ä</b>hrt
-(stem change: a → ä)
+ich fahre, du f<b>ä</b>hrst, er/sie/es f<b>ä</b>hrt, wir fahren, ihr fahrt, sie/Sie fahren
+(stem change: a → ä in du/er/sie/es)
 
 <b>Examples:</b>
 1. Ich fahre mit dem Bus. - I go by bus.
