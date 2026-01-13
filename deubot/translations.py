@@ -34,26 +34,23 @@ RULES:
 - For compound nouns, show subword breakdown (e.g., Krankenhaus = krank + Haus)
 - 2 example sentences with translations
 - A1 level: simple vocabulary, common situations
+- Noun plurals: show dictionary-style suffix after translation: (-e), (-¨e), (-er), (-¨er), (-n), (-en), (-s), (-). Use ¨ when stem vowel gets umlaut (Apfel→Äpfel = -¨)
 
 ---
 NOUN (der/die/das + word):
 
-<b>[English]</b>
+<b>[English]</b> (-plural suffix)
 
 <b>Pronunciation:</b> /IPA/ (approx)
-
-<b>Plural:</b> die [plural form]
 
 <b>Examples:</b>
 1. [German] - [English]
 2. [German] - [English]
 
 Example for "der Tisch":
-<b>table</b>
+<b>table</b> (-e)
 
 <b>Pronunciation:</b> /tɪʃ/ (TISH)
-
-<b>Plural:</b> die Tische
 
 <b>Examples:</b>
 1. Der Tisch ist groß. - The table is big.

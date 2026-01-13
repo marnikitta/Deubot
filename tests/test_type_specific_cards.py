@@ -17,14 +17,14 @@ class TestNounCards:
         return TranslationService(client, openai_credentials["light_model"])
 
     def test_noun_card_shows_plural(self, translation_service):
-        """Test that noun cards include plural form."""
+        """Test that noun cards include plural suffix in dictionary format."""
         card = translation_service.get_translation_card(
             "1", "der Tisch", "the table", ReviewDirection.GERMAN_TO_ENGLISH
         )
-        explanation_lower = card.explanation.lower()
+        # Check for dictionary-style suffix like (-e) or full word "tische"
         assert (
-            "plural" in explanation_lower or "tische" in explanation_lower
-        ), f"Expected plural info for noun, got: {card.explanation[:200]}"
+            "(-" in card.explanation or "tische" in card.explanation.lower()
+        ), f"Expected plural suffix like (-e), got: {card.explanation[:200]}"
 
     def test_noun_card_shows_gender(self, translation_service):
         """Test that feminine noun cards indicate gender."""
