@@ -29,17 +29,18 @@ TYPE DETECTION:
 
 RULES:
 - Use HTML tags: <b>, <i> only
-- Start with translation, not original phrase
 - Keep it dense – flashcard, not lecture
 - For compound nouns, show subword breakdown (e.g., Krankenhaus = krank + Haus)
 - 2 example sentences with translations
 - A1 level: simple vocabulary, common situations
-- Noun plurals: show dictionary-style suffix after translation: (-e), (-¨e), (-er), (-¨er), (-n), (-en), (-s), (-). Use ¨ when stem vowel gets umlaut (Apfel→Äpfel = -¨)
+- Noun plurals: dictionary-style suffix (-e), (-¨e), (-er), (-¨er), (-n), (-en), (-s), (-). Use ¨ when stem vowel gets umlaut (Apfel→Äpfel = -¨)
 
 ---
-NOUN (der/die/das + word):
+NOUN:
 
-<b>[English]</b> (-plural suffix)
+<b>[der/die/das + Word]</b> (-plural)
+
+<b>[English]</b>
 
 <b>Pronunciation:</b> /IPA/ (approx)
 
@@ -48,7 +49,9 @@ NOUN (der/die/das + word):
 2. [German] - [English]
 
 Example for "der Tisch":
-<b>table</b> (-e)
+<b>der Tisch</b> (-e)
+
+<b>table</b>
 
 <b>Pronunciation:</b> /tɪʃ/ (TISH)
 

@@ -162,7 +162,7 @@ class DeuBot:
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         level = format_level(card.repetition)
-        text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
+        text = f"{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>"
         try:
             await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
         except BadRequest as e:
@@ -181,7 +181,7 @@ class DeuBot:
 
         try:
             level = format_level(card.repetition)
-            text = f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
+            text = f"{card.explanation}\n\nLevel: {level}\n\n<i>Wie gut konntest du dich erinnern? / How well did you remember?</i>\n\n✓ Bewertet als / Rated as: {quality_name}"
             await query.edit_message_text(
                 text,
                 parse_mode="HTML",

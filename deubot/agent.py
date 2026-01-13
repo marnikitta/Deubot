@@ -261,9 +261,7 @@ class GermanLearningAgent:
             phrases, direction=ReviewDirection.GERMAN_TO_ENGLISH
         )
 
-        user_outputs: list[UserOutput] = [
-            MessageOutput(message=f"<b>{escape_html(card.german)}</b>\n\n{card.explanation}") for card in cards
-        ]
+        user_outputs: list[UserOutput] = [MessageOutput(message=card.explanation) for card in cards]
 
         logger.info(f"Generated {len(cards)} translation card(s) for phrase IDs: {phrase_ids}")
 
