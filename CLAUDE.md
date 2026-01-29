@@ -49,6 +49,7 @@ Tests are categorized using pytest markers:
 - CI runs unit tests on all branches; LLM tests should be run manually
 - When fixing a specific test, ALWAYS run only that test for fast feedback
 - LLM tests MUST use `-n 20` flag for parallel execution to manage 30-50 second per-test latency
+- LLM tests should use the shared `agent` fixture from `conftest.py` (handles `.env` loading and DB setup)
 
 ### Linting
 ```bash

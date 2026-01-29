@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 from datetime import datetime, timedelta
@@ -15,6 +16,7 @@ from deubot.agent import (
     escape_html,
 )
 from deubot.bot_helpers import format_level, get_quality_name, parse_callback_data
+from deubot.message import UserMessage
 from deubot.review_session import ReviewSession, ReviewCard
 from deubot.translations import ReviewDirection
 from deubot.systemd import notify_systemd
@@ -213,10 +215,35 @@ class DeuBot:
             self._clear_history()
 
         try:
-            outputs = self.agent.process_message(user_text)
+            user_message = UserMessage(text=user_text)
+            outputs = self.agent.process_message(user_message)
             await self._handle_outputs(update.message, outputs)
         except Exception as e:
             logger.error(f"Failed to process message: {str(e)}")
+            await update.message.reply_text(f"Fehler / Error: {str(e)}")
+            raise
+
+    async def handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not update.message or not update.message.photo:
+            return
+
+        if self._should_reset_daily():
+            self._clear_history()
+
+        photo = update.message.photo[-1]  # Highest resolution
+        file = await context.bot.get_file(photo.file_id)
+        image_bytes = await file.download_as_bytearray()
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+        caption = update.message.caption
+        logger.info(f"Photo received ({len(image_bytes)} bytes, caption={caption is not None})")
+
+        try:
+            user_message = UserMessage(text=caption, image_base64=image_base64)
+            outputs = self.agent.process_message(user_message)
+            await self._handle_outputs(update.message, outputs)
+        except Exception as e:
+            logger.error(f"Failed to process photo: {str(e)}")
             await update.message.reply_text(f"Fehler / Error: {str(e)}")
             raise
 
@@ -241,5 +268,6 @@ class DeuBot:
         application.add_handler(CommandHandler("debug", self.debug_command, filters=auth_filter))
         application.add_handler(CallbackQueryHandler(self.handle_callback))
         application.add_handler(MessageHandler(auth_filter & filters.TEXT & ~filters.COMMAND, self.handle_message))
+        application.add_handler(MessageHandler(auth_filter & filters.PHOTO, self.handle_photo))
 
         application.run_polling(allowed_updates=Update.ALL_TYPES)

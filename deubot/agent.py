@@ -7,6 +7,7 @@ from typing import Any, Generator
 from openai import OpenAI
 
 from deubot.database import PhrasesDB
+from deubot.message import UserMessage
 from deubot.tools import get_tools
 from deubot.translations import ReviewDirection, TranslationService
 
@@ -71,7 +72,7 @@ class GermanLearningAgent:
         self.db = db
         self.enable_logs = enable_logs
         self.system_prompt = _load_system_prompt()
-        self.messages: list[dict[str, str]] = []
+        self.messages: list[dict[str, Any]] = []
         self.tools = get_tools()
         self.translation_service = TranslationService(self.client, light_model)
 
@@ -395,10 +396,28 @@ class GermanLearningAgent:
                         texts.append(content_item.text)
         return "".join(texts)
 
-    def process_message(self, user_message: str) -> Generator[UserOutput, None, None]:
+    def _build_user_content(self, message: UserMessage) -> str | list[dict]:
+        """Build OpenAI content array from UserMessage."""
+        if message.image_base64 is None:
+            return message.text or ""
+
+        content: list[dict] = []
+        content.append({"type": "input_text", "text": message.text or "What's in this image?"})
+        content.append(
+            {
+                "type": "input_image",
+                "image_url": f"data:image/jpeg;base64,{message.image_base64}",
+            }
+        )
+        return content
+
+    def process_message(self, message: UserMessage | str) -> Generator[UserOutput, None, None]:
         """Process a user message and yield structured outputs as they appear."""
+        if isinstance(message, str):
+            message = UserMessage(text=message)
+
         input_list = list(self.messages)
-        input_list.append({"role": "user", "content": user_message})
+        input_list.append({"role": "user", "content": self._build_user_content(message)})
 
         yield TypingOutput()
 
