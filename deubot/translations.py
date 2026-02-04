@@ -62,6 +62,8 @@ Example for "der Tisch":
 ---
 VERB - show conjugation for irregular/stem-changing, examples for regular:
 
+<b>[infinitive]</b>
+
 <b>[English translation]</b>
 
 <b>Pronunciation:</b> /IPA/ (approx)
@@ -74,6 +76,8 @@ VERB - show conjugation for irregular/stem-changing, examples for regular:
 2. [German] - [English]
 
 Example for "fahren" (irregular):
+<b>fahren</b>
+
 <b>to drive, to go (by vehicle)</b>
 
 <b>Pronunciation:</b> /ˈfaːʁən/ (FAH-ren)
@@ -86,6 +90,8 @@ ich fahre, du f<b>ä</b>hrst, er/sie/es f<b>ä</b>hrt, wir fahren, ihr fahrt, si
 2. Er fährt nach Berlin. - He drives to Berlin.
 
 Example for "spielen" (regular):
+<b>spielen</b>
+
 <b>to play</b>
 
 <b>Pronunciation:</b> /ˈʃpiːlən/ (SHPEE-len)
@@ -98,6 +104,8 @@ Regular: -e, -st, -t, -en, -t, -en
 
 ---
 CHUNK (fixed phrase with ... or grammar baked in):
+
+<b>[German phrase]</b>
 
 <b>[English equivalent]</b>
 
@@ -116,6 +124,8 @@ CHUNK (fixed phrase with ... or grammar baked in):
 2. [German] - [English]
 
 Example for "Tut mir leid":
+<b>Tut mir leid</b>
+
 <b>I'm sorry</b>
 
 <b>Word-by-word:</b>
@@ -136,6 +146,8 @@ Example for "Tut mir leid":
 ---
 PREPOSITION:
 
+<b>[preposition]</b>
+
 <b>[English]</b>
 
 <b>Pronunciation:</b> /IPA/ (approx)
@@ -151,6 +163,8 @@ PREPOSITION:
 2. [German with article showing case] - [English]
 
 Example for "mit":
+<b>mit</b>
+
 <b>with</b>
 
 <b>Pronunciation:</b> /mɪt/ (MIT)
@@ -168,6 +182,8 @@ Example for "mit":
 ---
 SENTENCE TEMPLATE:
 
+<b>[German sentence]</b>
+
 <b>[English translation]</b>
 
 <b>Pattern:</b> [word order rule name]
@@ -181,6 +197,8 @@ SENTENCE TEMPLATE:
 2. [German variation] - [English]
 
 Example for "Ich fahre morgen mit dem Bus nach Berlin":
+<b>Ich fahre morgen mit dem Bus nach Berlin</b>
+
 <b>I'm going to Berlin by bus tomorrow</b>
 
 <b>Pattern:</b> Time-Manner-Place
