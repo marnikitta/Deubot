@@ -34,7 +34,7 @@ RULES:
 - 2 example sentences with translations
 - A1 level: simple vocabulary, common situations
 - Noun plurals: dictionary-style suffix (-e), (-¨e), (-er), (-¨er), (-n), (-en), (-s), (-). Use ¨ when stem vowel gets umlaut (Apfel→Äpfel = -¨)
-- Add a <b>💡</b> line: one short memory tip tailored to the specific word. Examples: suffix gender rule ("ends in -ung → always die"), English/Latin cognate ("sounds like 'table' in Latin 'tabula'"), a sound image ("schreiben — hear the pen scratching: shhhh"), a phrase anchor ("im Kino — always das"), a conjugation pattern trick. Pick whatever fits the word best. Keep it to one sentence.
+- Add one or more <b>💡</b> lines: short memory tips tailored to the specific word. For nouns, ALWAYS include a gender tip (suffix rule like "-ung → die", "-er → der", "-chen → das"; or a vivid image linking the noun to its gender). Add more tips if helpful (cognate, sound image, conjugation trick, etc.). Usually 1-2 tips, but more are fine when the word genuinely needs them.
 
 ---
 NOUN:
@@ -45,7 +45,8 @@ NOUN:
 
 <b>Pronunciation:</b> /IPA/ (approx)
 
-💡 [memory tip]
+💡 [gender tip]
+💡 [more tips if helpful, e.g. meaning tip]
 
 <b>Examples:</b>
 1. [German] - [English]
@@ -58,7 +59,8 @@ Example for "der Tisch":
 
 <b>Pronunciation:</b> /tɪʃ/ (TISH)
 
-💡 -isch ending, but it's der — picture: a man builds a Tisch (table) from wood.
+💡 Most single-syllable nouns are der — der Tisch, der Stuhl, der Hund.
+💡 Sounds like English "dish" — a dish sits on a Tisch.
 
 <b>Examples:</b>
 1. Der Tisch ist groß. - The table is big.
