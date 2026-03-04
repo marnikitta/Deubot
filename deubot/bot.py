@@ -1,4 +1,5 @@
 import base64
+import html
 import logging
 import os
 from datetime import datetime, timedelta
@@ -72,7 +73,8 @@ class DeuBot:
             "<i>Send me German or English text and I'll translate it for you.</i>\n\n"
             "Befehle / <i>Commands:</i>\n"
             "/clear - Verlauf löschen / <i>Clear history</i>\n"
-            "/debug - Debug-Logging umschalten / <i>Toggle debug logging</i>",
+            "/debug - Debug-Logging umschalten / <i>Toggle debug logging</i>\n"
+            "/history - Agentverlauf anzeigen / <i>Show agent history</i>",
             parse_mode="HTML",
         )
 
@@ -92,6 +94,33 @@ class DeuBot:
 
         status = "aktiviert / enabled" if self.debug_enabled else "deaktiviert / disabled"
         await update.message.reply_text(f"Debug-Logging {status}", parse_mode="HTML")
+
+    async def history_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not update.message:
+            return
+
+        if not self.agent.messages:
+            await update.message.reply_text("History is empty.")
+            return
+
+        lines = []
+        for msg in self.agent.messages:
+            role = msg["role"]
+            content = msg.get("content", "")
+            if isinstance(content, str):
+                preview = content[:500] + "..." if len(content) > 500 else content
+            else:
+                preview = str(content)[:500]
+            lines.append(f"<b>{role}</b>: <pre>{html.escape(preview)}</pre>")
+
+        chunk = ""
+        for line in lines:
+            if chunk and len(chunk) + len(line) + 2 > 4000:
+                await update.message.reply_text(chunk, parse_mode="HTML")
+                chunk = ""
+            chunk = chunk + "\n\n" + line if chunk else line
+        if chunk:
+            await update.message.reply_text(chunk, parse_mode="HTML")
 
     async def _handle_outputs(self, message, outputs: Iterable[UserOutput]) -> None:
         for output in outputs:
@@ -268,6 +297,7 @@ class DeuBot:
         application.add_handler(CommandHandler("start", self.start_command, filters=auth_filter))
         application.add_handler(CommandHandler("clear", self.clear_command, filters=auth_filter))
         application.add_handler(CommandHandler("debug", self.debug_command, filters=auth_filter))
+        application.add_handler(CommandHandler("history", self.history_command, filters=auth_filter))
         application.add_handler(CallbackQueryHandler(self.handle_callback))
         application.add_handler(MessageHandler(auth_filter & filters.TEXT & ~filters.COMMAND, self.handle_message))
         application.add_handler(MessageHandler(auth_filter & filters.PHOTO, self.handle_photo))
