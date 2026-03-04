@@ -419,12 +419,11 @@ class GermanLearningAgent:
         if isinstance(message, str):
             message = UserMessage(text=message)
 
-        input_list = list(self.messages)
-        input_list.append({"role": "user", "content": self._build_user_content(message)})
+        self.messages.append({"role": "user", "content": self._build_user_content(message)})
 
         yield TypingOutput()
 
-        response = self._call_llm(input_list, iteration=1)
+        response = self._call_llm(self.messages, iteration=1)
 
         max_iterations = 10
         iterations = 0
@@ -433,7 +432,7 @@ class GermanLearningAgent:
             iterations += 1
             has_continuation_tools = False
 
-            input_list += response.output
+            self.messages += response.output
 
             if self.enable_logs:
                 reasoning_text = self._extract_text(response, "reasoning")
@@ -454,7 +453,7 @@ class GermanLearningAgent:
                 tool_call_result = self._execute_tool(tool_name, tool_args)
                 yield from tool_call_result.user_outputs
 
-                input_list.append(
+                self.messages.append(
                     {
                         "type": "function_call_output",
                         "call_id": output_item.call_id,
@@ -467,11 +466,9 @@ class GermanLearningAgent:
 
             if has_continuation_tools:
                 yield TypingOutput()
-                response = self._call_llm(input_list, iteration=iterations + 1)
+                response = self._call_llm(self.messages, iteration=iterations + 1)
             else:
                 break
-
-        self.messages = input_list
 
         response_text = self._extract_text(response, "message")
         if response_text:

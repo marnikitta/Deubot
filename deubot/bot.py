@@ -105,13 +105,13 @@ class DeuBot:
 
         lines = []
         for msg in self.agent.messages:
-            role = msg["role"]
-            content = msg.get("content", "")
-            if isinstance(content, str):
-                preview = content[:500] + "..." if len(content) > 500 else content
+            if isinstance(msg, dict):
+                role = msg.get("role", msg.get("type", "?"))
+                content = str(msg.get("content", msg.get("output", "")))[:500]
             else:
-                preview = str(content)[:500]
-            lines.append(f"<b>{role}</b>: <pre>{html.escape(preview)}</pre>")
+                role = getattr(msg, "type", type(msg).__name__)
+                content = str(getattr(msg, "content", getattr(msg, "name", "")))[:500]
+            lines.append(f"<b>{role}</b>: <pre>{html.escape(content)}</pre>")
 
         chunk = ""
         for line in lines:
