@@ -120,7 +120,7 @@ class PhrasesDB:
 
         phrase = self.phrases[phrase_id]
 
-        if quality >= 3:
+        if quality >= 2:
             phrase.ease_factor = max(1.3, phrase.ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)))
             phrase.repetition += 1
 

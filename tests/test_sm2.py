@@ -96,7 +96,7 @@ def test_ease_factor_has_minimum_of_1_3():
 
 
 def test_failure_resets_repetition_to_zero():
-    """Test that quality < 3 resets repetition counter."""
+    """Test that quality < 2 resets repetition counter."""
     db = PhrasesDB()
     phrase_id, _, _ = db.add_phrase("Hallo", "hello")
 
@@ -106,7 +106,7 @@ def test_failure_resets_repetition_to_zero():
 
     assert db.phrases[phrase_id].repetition == 3
 
-    db.update_review(phrase_id, quality=2)
+    db.update_review(phrase_id, quality=1)
 
     phrase = db.phrases[phrase_id]
     assert phrase.repetition == 0
@@ -114,7 +114,7 @@ def test_failure_resets_repetition_to_zero():
 
 
 def test_failure_preserves_ease_factor():
-    """Test that quality < 3 does NOT modify ease factor."""
+    """Test that quality < 2 does NOT modify ease factor."""
     db = PhrasesDB()
     phrase_id, _, _ = db.add_phrase("Hallo", "hello")
 
@@ -123,7 +123,7 @@ def test_failure_preserves_ease_factor():
 
     ef_before_failure = db.phrases[phrase_id].ease_factor
 
-    db.update_review(phrase_id, quality=2)
+    db.update_review(phrase_id, quality=1)
 
     phrase = db.phrases[phrase_id]
     assert phrase.ease_factor == ef_before_failure
@@ -242,12 +242,12 @@ def test_next_review_date_is_set_correctly():
 
 
 def test_quality_rating_boundary_at_3():
-    """Test that quality 3 is success, quality 2 is failure."""
+    """Test that quality 2 is success (Hard advances), quality 1 is failure."""
     db = PhrasesDB()
     phrase_id, _, _ = db.add_phrase("Hallo", "hello")
 
-    db.update_review(phrase_id, quality=3)
+    db.update_review(phrase_id, quality=2)
     assert db.phrases[phrase_id].repetition == 1
 
-    db.update_review(phrase_id, quality=2)
+    db.update_review(phrase_id, quality=1)
     assert db.phrases[phrase_id].repetition == 0
