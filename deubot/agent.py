@@ -147,7 +147,7 @@ class GermanLearningAgent:
                     user_outputs=[],
                 )
         else:
-            phrases = self.db.get_due_phrases(limit=40)
+            phrases = self.db.get_due_phrases(limit=50)
 
         if not phrases:
             logger.info("No phrases due for review")
@@ -175,7 +175,7 @@ class GermanLearningAgent:
         )
 
     def _execute_get_vocabulary(self, arguments: dict[str, Any]) -> ToolCallResult:
-        limit = arguments.get("limit", 200)
+        limit = arguments.get("limit", 1000)
         sort_by = arguments.get("sort_by", "id")
         ascending = arguments.get("ascending", True)
         phrases = self.db.get_vocabulary(limit=limit, sort_by=sort_by, ascending=ascending)

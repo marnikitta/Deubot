@@ -187,7 +187,6 @@ class PhrasesDB:
         Returns:
             List of phrase dictionaries
         """
-        limit = min(limit, 2000)
         phrases_list = list(self.phrases.values())
 
         # Define sort key based on sort_by parameter
