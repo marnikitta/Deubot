@@ -84,6 +84,20 @@ class TestVerbCards:
         # Should contain examples with the verb
         assert "spiel" in explanation_lower, f"Expected examples with verb root, got: {card.explanation[:200]}"
 
+    def test_verb_shows_partizip_ii(self, translation_service):
+        """Test that verb cards include Partizip II."""
+        card = translation_service.get_translation_card("1", "fahren", "to drive", ReviewDirection.GERMAN_TO_ENGLISH)
+        explanation_lower = card.explanation.lower()
+        assert "partizip" in explanation_lower, f"Expected Partizip II section, got: {card.explanation[:400]}"
+        assert "gefahren" in explanation_lower, f"Expected 'gefahren' in card, got: {card.explanation[:400]}"
+
+    def test_sein_verb_shows_partizip_ii(self, translation_service):
+        """Test that 'sein' card includes Partizip II."""
+        card = translation_service.get_translation_card("1", "sein", "to be", ReviewDirection.GERMAN_TO_ENGLISH)
+        explanation_lower = card.explanation.lower()
+        assert "partizip" in explanation_lower, f"Expected Partizip II section, got: {card.explanation[:400]}"
+        assert "gewesen" in explanation_lower, f"Expected 'gewesen' in card, got: {card.explanation[:400]}"
+
     def test_sein_verb_shows_conjugation(self, translation_service):
         """Test that highly irregular verb 'sein' shows conjugation."""
         card = translation_service.get_translation_card("1", "sein", "to be", ReviewDirection.GERMAN_TO_ENGLISH)

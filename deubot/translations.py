@@ -71,6 +71,8 @@ VERB - show conjugation for irregular/stem-changing, examples for regular:
 [For irregular: ich [form], du [form], er/sie/es [form], wir [form], ihr [form], sie/Sie [form] + note about stem change]
 [For regular: Regular conjugation + skip explicit forms]
 
+<b>Partizip II:</b> [past participle] ([auxiliary: haben/sein])
+
 <b>Examples:</b>
 1. [German] - [English]
 2. [German] - [English]
@@ -85,6 +87,8 @@ Example for "fahren" (irregular):
 ich fahre, du f<b>ä</b>hrst, er/sie/es f<b>ä</b>hrt, wir fahren, ihr fahrt, sie/Sie fahren
 (stem change: a → ä in du/er/sie/es)
 
+<b>Partizip II:</b> gefahren (sein)
+
 <b>Examples:</b>
 1. Ich fahre mit dem Bus. - I go by bus.
 2. Er fährt nach Berlin. - He drives to Berlin.
@@ -97,6 +101,8 @@ Example for "spielen" (regular):
 <b>Pronunciation:</b> /ˈʃpiːlən/ (SHPEE-len)
 
 Regular: -e, -st, -t, -en, -t, -en
+
+<b>Partizip II:</b> gespielt (haben)
 
 <b>Examples:</b>
 1. Die Kinder spielen im Garten. - The children play in the garden.
