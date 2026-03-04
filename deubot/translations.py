@@ -34,6 +34,7 @@ RULES:
 - 2 example sentences with translations
 - A1 level: simple vocabulary, common situations
 - Noun plurals: dictionary-style suffix (-e), (-¨e), (-er), (-¨er), (-n), (-en), (-s), (-). Use ¨ when stem vowel gets umlaut (Apfel→Äpfel = -¨)
+- Add a <b>💡</b> line: one short memory tip tailored to the specific word. Examples: suffix gender rule ("ends in -ung → always die"), English/Latin cognate ("sounds like 'table' in Latin 'tabula'"), a sound image ("schreiben — hear the pen scratching: shhhh"), a phrase anchor ("im Kino — always das"), a conjugation pattern trick. Pick whatever fits the word best. Keep it to one sentence.
 
 ---
 NOUN:
@@ -43,6 +44,8 @@ NOUN:
 <b>[English]</b>
 
 <b>Pronunciation:</b> /IPA/ (approx)
+
+💡 [memory tip]
 
 <b>Examples:</b>
 1. [German] - [English]
@@ -54,6 +57,8 @@ Example for "der Tisch":
 <b>table</b>
 
 <b>Pronunciation:</b> /tɪʃ/ (TISH)
+
+💡 -isch ending, but it's der — picture: a man builds a Tisch (table) from wood.
 
 <b>Examples:</b>
 1. Der Tisch ist groß. - The table is big.
@@ -73,6 +78,8 @@ VERB - show conjugation for irregular/stem-changing, examples for regular:
 
 <b>Partizip II:</b> [past participle] ([auxiliary: haben/sein])
 
+💡 [memory tip]
+
 <b>Examples:</b>
 1. [German] - [English]
 2. [German] - [English]
@@ -89,6 +96,8 @@ ich fahre, du f<b>ä</b>hrst, er/sie/es f<b>ä</b>hrt, wir fahren, ihr fahrt, si
 
 <b>Partizip II:</b> gefahren (sein)
 
+💡 Sounds like "far" — you fahren to go far.
+
 <b>Examples:</b>
 1. Ich fahre mit dem Bus. - I go by bus.
 2. Er fährt nach Berlin. - He drives to Berlin.
@@ -103,6 +112,8 @@ Example for "spielen" (regular):
 Regular: -e, -st, -t, -en, -t, -en
 
 <b>Partizip II:</b> gespielt (haben)
+
+💡 "Spiel" sounds like "spiel" in English (a speech/play).
 
 <b>Examples:</b>
 1. Die Kinder spielen im Garten. - The children play in the garden.
@@ -120,6 +131,8 @@ CHUNK (fixed phrase with ... or grammar baked in):
 - [word2] - [translation]
 
 <b>Usage:</b> [when/how to use, 1-2 sentences]
+
+💡 [memory tip]
 
 <b>Variations:</b>
 - [variation 1] - [meaning]
@@ -141,6 +154,8 @@ Example for "Tut mir leid":
 
 <b>Usage:</b> Apology or expressing regret. Common in everyday speech.
 
+💡 "Leid" sounds like "laid" — laid low with sorrow.
+
 <b>Variations:</b>
 - Es tut mir leid - I'm sorry (full form)
 - Tut mir sehr leid - I'm very sorry
@@ -160,6 +175,8 @@ PREPOSITION:
 
 <b>Case:</b> + [Dativ/Akkusativ]
 
+💡 [memory tip]
+
 <b>Uses:</b>
 - [common use 1]: [example phrase]
 - [common use 2]: [example phrase]
@@ -176,6 +193,8 @@ Example for "mit":
 <b>Pronunciation:</b> /mɪt/ (MIT)
 
 <b>Case:</b> + Dativ
+
+💡 "mit" = "with" — both short, both start with a lip sound (m/w).
 
 <b>Uses:</b>
 - accompaniment: mit meinem Freund (with my friend)
@@ -195,6 +214,8 @@ SENTENCE TEMPLATE:
 <b>Pattern:</b> [word order rule name]
 [1-line explanation of the pattern]
 
+💡 [memory tip]
+
 <b>Structure:</b>
 [Break down: Subject + Verb + TIME + MANNER + PLACE or similar]
 
@@ -209,6 +230,8 @@ Example for "Ich fahre morgen mit dem Bus nach Berlin":
 
 <b>Pattern:</b> Time-Manner-Place
 German puts WHEN before HOW before WHERE (unlike English).
+
+💡 TMP = Time-Manner-Place, like German efficiency: when, how, where.
 
 <b>Structure:</b>
 Ich fahre + morgen (when) + mit dem Bus (how) + nach Berlin (where)
