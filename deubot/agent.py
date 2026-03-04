@@ -2,7 +2,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, Literal
 
 from openai import OpenAI
 
@@ -356,6 +356,9 @@ class GermanLearningAgent:
                 return self._execute_update_phrases(arguments)
             case _:
                 return ToolCallResult(result="Unknown tool", needs_llm_followup=False, user_outputs=[])
+
+    def add_history(self, role: Literal["user", "assistant"], text: str) -> None:
+        self.messages.append({"role": role, "content": text})
 
     def clear_history(self) -> None:
         """Clear the conversation history and translation cache."""

@@ -124,6 +124,7 @@ class DeuBot:
             prompt = "Wie sagt man das auf Deutsch? / How do you say this in German?"
         text = f"<b>{escape_html(front)}</b>\n\n<i>{prompt}</i>"
         await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
+        self.agent.add_history("assistant", f"Showing review card: {card.german} (id: {card.phrase_id})")
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         query = update.callback_query
@@ -180,6 +181,7 @@ class DeuBot:
         quality_name = get_quality_name(quality)
 
         self.review_session.record_quality(phrase_id, quality)
+        self.agent.add_history("user", f"Rated '{card.german}' as {quality_name}")
 
         try:
             level = format_level(card.repetition)
