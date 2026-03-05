@@ -175,7 +175,11 @@ class PhrasesDB:
         return found, not_found
 
     def get_vocabulary(
-        self, limit: int = 100, sort_by: Literal["alphabetical", "proficiency", "id"] = "id", ascending: bool = True
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        sort_by: Literal["alphabetical", "proficiency", "id"] = "id",
+        ascending: bool = True,
     ) -> list[dict[str, Any]]:
         """Get vocabulary with custom sorting and limit.
 
@@ -208,7 +212,7 @@ class PhrasesDB:
             key_func = id_key
 
         sorted_phrases = sorted(phrases_list, key=key_func, reverse=not ascending)
-        return [asdict(phrase) for phrase in sorted_phrases[:limit]]
+        return [asdict(phrase) for phrase in sorted_phrases[offset : offset + limit]]
 
     def remove_phrases(self, phrase_ids: list[str]) -> tuple[list[str], list[str]]:
         """Remove phrases by their IDs.

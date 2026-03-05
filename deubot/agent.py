@@ -176,15 +176,18 @@ class GermanLearningAgent:
 
     def _execute_get_vocabulary(self, arguments: dict[str, Any]) -> ToolCallResult:
         limit = arguments.get("limit", 1000)
+        offset = arguments.get("offset", 0)
         sort_by = arguments.get("sort_by", "id")
         ascending = arguments.get("ascending", True)
-        phrases = self.db.get_vocabulary(limit=limit, sort_by=sort_by, ascending=ascending)
+        phrases = self.db.get_vocabulary(limit=limit, offset=offset, sort_by=sort_by, ascending=ascending)
         if phrases:
             phrases_list = "\n".join(
                 [f"- ID: {p['id']}, German: {p['german']}, Ease: {p['ease_factor']:.1f}" for p in phrases]
             )
             result = f"Found {len(phrases)} phrase(s) in vocabulary:\n{phrases_list}"
-            logger.info(f"Retrieved {len(phrases)} phrases from vocabulary (sort_by={sort_by}, ascending={ascending})")
+            logger.info(
+                f"Retrieved {len(phrases)} phrases from vocabulary (sort_by={sort_by}, ascending={ascending}, offset={offset})"
+            )
         else:
             result = "No phrases in vocabulary"
             logger.info("No phrases in vocabulary")

@@ -216,8 +216,12 @@ Ease factor: <2.0 difficult, 2.0-2.8 average, >2.8 well-known.
                         "type": "boolean",
                         "description": "Sort direction. True: ascending order. False: descending order. For proficiency, False=best phrases first, True=hardest phrases first. For id, False=newest first.",
                     },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Number of phrases to skip before returning results. Default: 0. Use with limit for paging.",
+                    },
                 },
-                "required": ["limit", "sort_by", "ascending"],
+                "required": ["limit", "sort_by", "ascending", "offset"],
                 "additionalProperties": False,
             },
         },

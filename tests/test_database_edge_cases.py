@@ -113,6 +113,28 @@ def test_update_phrase_nonexistent(temp_db):
     assert len(temp_db.phrases) == 1
 
 
+def test_get_vocabulary_offset_paging(temp_db):
+    """get_vocabulary with offset should return non-overlapping pages."""
+    temp_db.add_phrase("der Hund", "the dog")
+    temp_db.add_phrase("die Katze", "the cat")
+    temp_db.add_phrase("das Pferd", "the horse")
+    temp_db.add_phrase("der Vogel", "the bird")
+
+    page1 = temp_db.get_vocabulary(limit=2, offset=0, sort_by="id")
+    page2 = temp_db.get_vocabulary(limit=2, offset=2, sort_by="id")
+
+    assert len(page1) == 2
+    assert len(page2) == 2
+    page1_ids = {p["id"] for p in page1}
+    page2_ids = {p["id"] for p in page2}
+    assert page1_ids.isdisjoint(page2_ids)
+    assert page1_ids | page2_ids == {"1", "2", "3", "4"}
+
+    # Offset beyond total returns empty
+    page3 = temp_db.get_vocabulary(limit=2, offset=10, sort_by="id")
+    assert page3 == []
+
+
 def test_get_phrases_by_ids_all_found(temp_db):
     """get_phrases_by_ids should return all phrases when all IDs exist."""
     temp_db.add_phrase("der Hund", "the dog")
