@@ -31,10 +31,11 @@ RULES:
 - Use HTML tags: <b>, <i> only
 - Keep it dense – flashcard, not lecture
 - For compound nouns, show subword breakdown (e.g., Krankenhaus = krank + Haus)
-- 2 example sentences with translations
+- 4-5 example sentences with translations. Vary grammar: use accusative (Akk), dative (Dat), and Perfekt (past tense) where natural
 - A1 level: simple vocabulary, common situations
 - Noun plurals: dictionary-style suffix (-e), (-¨e), (-er), (-¨er), (-n), (-en), (-s), (-). Use ¨ when stem vowel gets umlaut (Apfel→Äpfel = -¨)
 - Add one or more <b>💡</b> lines: short memory tips tailored to the specific word. For nouns, ALWAYS include a gender tip (suffix rule like "-ung → die", "-er → der", "-chen → das"; or a vivid image linking the noun to its gender). Add more tips if helpful (cognate, sound image, conjugation trick, etc.). Usually 1-2 tips, but more are fine when the word genuinely needs them.
+- End every card with a <b>See also:</b> line — one dense line listing 3-5 related words with translations. For nouns: semantically related words. For days/months/ordinals: the full set in order. For verbs: related verbs or antonyms. For prepositions: other prepositions with same case.
 
 ---
 NOUN:
@@ -51,6 +52,10 @@ NOUN:
 <b>Examples:</b>
 1. [German] - [English]
 2. [German] - [English]
+3. [German] - [English] (Akk/Dat/Perfekt)
+4. [German] - [English]
+
+<b>See also:</b> [3-5 related words with translations]
 
 Example for "der Tisch":
 <b>der Tisch</b> (-e)
@@ -64,7 +69,12 @@ Example for "der Tisch":
 
 <b>Examples:</b>
 1. Der Tisch ist groß. - The table is big.
-2. Ich sitze am Tisch. - I sit at the table.
+2. Ich sehe den Tisch. - I see the table. (Akk)
+3. Das Buch liegt auf dem Tisch. - The book is on the table. (Dat)
+4. Ich habe den Tisch gekauft. - I bought the table. (Perfekt)
+5. Stell die Tasse auf den Tisch! - Put the cup on the table! (Akk)
+
+<b>See also:</b> der Stuhl - chair, das Regal - shelf, die Lampe - lamp, der Schrank - cabinet
 
 ---
 VERB - show conjugation for irregular/stem-changing, examples for regular:
@@ -85,6 +95,10 @@ VERB - show conjugation for irregular/stem-changing, examples for regular:
 <b>Examples:</b>
 1. [German] - [English]
 2. [German] - [English]
+3. [German] - [English] (Perfekt/case variation)
+4. [German] - [English]
+
+<b>See also:</b> [3-5 related verbs or antonyms with translations]
 
 Example for "fahren" (irregular):
 <b>fahren</b>
@@ -103,6 +117,11 @@ ich fahre, du f<b>ä</b>hrst, er/sie/es f<b>ä</b>hrt, wir fahren, ihr fahrt, si
 <b>Examples:</b>
 1. Ich fahre mit dem Bus. - I go by bus.
 2. Er fährt nach Berlin. - He drives to Berlin.
+3. Wir sind gestern gefahren. - We drove yesterday. (Perfekt)
+4. Fährst du mit dem Zug? - Are you going by train?
+5. Sie ist nach Hause gefahren. - She went home. (Perfekt)
+
+<b>See also:</b> laufen - to walk, fliegen - to fly, reisen - to travel, ankommen - to arrive
 
 Example for "spielen" (regular):
 <b>spielen</b>
@@ -120,6 +139,11 @@ Regular: -e, -st, -t, -en, -t, -en
 <b>Examples:</b>
 1. Die Kinder spielen im Garten. - The children play in the garden.
 2. Spielst du Fußball? - Do you play soccer?
+3. Ich habe gestern Klavier gespielt. - I played piano yesterday. (Perfekt)
+4. Er spielt mit dem Hund. - He plays with the dog. (Dat)
+5. Wir haben zusammen gespielt. - We played together. (Perfekt)
+
+<b>See also:</b> üben - to practice, gewinnen - to win, verlieren - to lose, trainieren - to train
 
 ---
 CHUNK (fixed phrase with ... or grammar baked in):
@@ -143,6 +167,10 @@ CHUNK (fixed phrase with ... or grammar baked in):
 <b>Examples:</b>
 1. [German] - [English]
 2. [German] - [English]
+3. [German] - [English]
+4. [German] - [English]
+
+<b>See also:</b> [3-5 related phrases with translations]
 
 Example for "Tut mir leid":
 <b>Tut mir leid</b>
@@ -165,6 +193,10 @@ Example for "Tut mir leid":
 <b>Examples:</b>
 1. Tut mir leid, ich bin spät. - I'm sorry, I'm late.
 2. Das tut mir leid. - I'm sorry about that.
+3. Es hat mir leidgetan. - I was sorry about it. (Perfekt)
+4. Tut mir leid, das wusste ich nicht. - I'm sorry, I didn't know that.
+
+<b>See also:</b> Entschuldigung - excuse me, Verzeihung - pardon, Macht nichts - no worries, Kein Problem - no problem
 
 ---
 PREPOSITION:
@@ -186,6 +218,10 @@ PREPOSITION:
 <b>Examples:</b>
 1. [German with article showing case] - [English]
 2. [German with article showing case] - [English]
+3. [German with article showing case] - [English]
+4. [German with article showing case] - [English]
+
+<b>See also:</b> [3-5 prepositions with same case + translations]
 
 Example for "mit":
 <b>mit</b>
@@ -205,6 +241,11 @@ Example for "mit":
 <b>Examples:</b>
 1. Ich gehe mit <b>dem</b> Hund. - I go with the dog. (der→dem)
 2. Ich fahre mit <b>der</b> Bahn. - I go by train. (die→der)
+3. Ich habe mit <b>dem</b> Chef gesprochen. - I spoke with the boss. (Perfekt)
+4. Kommst du mit <b>uns</b>? - Are you coming with us?
+5. Er schreibt mit <b>einem</b> Kugelschreiber. - He writes with a pen.
+
+<b>See also:</b> von - from (+Dat), nach - after/to (+Dat), bei - at/near (+Dat), zu - to (+Dat)
 
 ---
 SENTENCE TEMPLATE:
@@ -224,6 +265,10 @@ SENTENCE TEMPLATE:
 <b>Variations:</b>
 - [German variation] - [English]
 - [German variation] - [English]
+- [German variation] - [English]
+- [German variation] - [English]
+
+<b>See also:</b> [3-5 related phrases or patterns with translations]
 
 Example for "Ich fahre morgen mit dem Bus nach Berlin":
 <b>Ich fahre morgen mit dem Bus nach Berlin</b>
@@ -241,6 +286,10 @@ Ich fahre + morgen (when) + mit dem Bus (how) + nach Berlin (where)
 <b>Variations:</b>
 - Morgen fahre ich nach Berlin. - Tomorrow I go to Berlin. (verb stays 2nd)
 - Ich fahre heute mit dem Zug nach München. - I go to Munich by train today.
+- Ich bin gestern mit dem Bus gefahren. - I went by bus yesterday. (Perfekt)
+- Wir fahren nächste Woche nach Hamburg. - We go to Hamburg next week.
+
+<b>See also:</b> Ich gehe heute ins Kino - I'm going to the cinema today, Er kommt morgen nach Hause - He's coming home tomorrow
 """
 
 
