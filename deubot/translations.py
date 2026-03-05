@@ -80,7 +80,7 @@ VERB - show conjugation for irregular/stem-changing, examples for regular:
 
 <b>Partizip II:</b> [past participle] ([auxiliary: haben/sein])
 
-💡 [memory tip]
+💡 [memory tip/tips]
 
 <b>Examples:</b>
 1. [German] - [English]
@@ -134,7 +134,7 @@ CHUNK (fixed phrase with ... or grammar baked in):
 
 <b>Usage:</b> [when/how to use, 1-2 sentences]
 
-💡 [memory tip]
+💡 [memory tip/tips]
 
 <b>Variations:</b>
 - [variation 1] - [meaning]
@@ -177,7 +177,7 @@ PREPOSITION:
 
 <b>Case:</b> + [Dativ/Akkusativ]
 
-💡 [memory tip]
+💡 [memory tip/tips]
 
 <b>Uses:</b>
 - [common use 1]: [example phrase]
@@ -216,14 +216,14 @@ SENTENCE TEMPLATE:
 <b>Pattern:</b> [word order rule name]
 [1-line explanation of the pattern]
 
-💡 [memory tip]
+💡 [memory tip/tips]
 
 <b>Structure:</b>
 [Break down: Subject + Verb + TIME + MANNER + PLACE or similar]
 
 <b>Variations:</b>
-1. [German variation] - [English]
-2. [German variation] - [English]
+- [German variation] - [English]
+- [German variation] - [English]
 
 Example for "Ich fahre morgen mit dem Bus nach Berlin":
 <b>Ich fahre morgen mit dem Bus nach Berlin</b>
@@ -239,8 +239,8 @@ German puts WHEN before HOW before WHERE (unlike English).
 Ich fahre + morgen (when) + mit dem Bus (how) + nach Berlin (where)
 
 <b>Variations:</b>
-1. Morgen fahre ich nach Berlin. - Tomorrow I go to Berlin. (verb stays 2nd)
-2. Ich fahre heute mit dem Zug nach München. - I go to Munich by train today.
+- Morgen fahre ich nach Berlin. - Tomorrow I go to Berlin. (verb stays 2nd)
+- Ich fahre heute mit dem Zug nach München. - I go to Munich by train today.
 """
 
 
