@@ -85,18 +85,29 @@ The default deployment host is `deubot`, configured in the Makefile. Change `hos
 
 ### Core Modules
 
-- **main.py**: Application entry point with `main()` function
-- **agent.py**: AI agent with OpenAI integration, tool calling, and typed output system (dataclasses like `MessageOutput`, `ShowReviewBatchOutput`, `ToolCallResult`)
+- **main.py**: Entry point — wires `PhrasesDB` → `GermanLearningAgent` → `DeuBot` and starts the bot
+- **agent.py**: Agentic loop (up to 10 iterations) with OpenAI tool calling. Tools signal continuation via `needs_llm_followup`. Typed outputs: `MessageOutput`, `ShowReviewBatchOutput`, `TypingOutput`, `LogOutput`, `ToolCallResult`
 - **tools.py**: Tool definitions with elaborate descriptions, usage patterns, and examples following Claude Code's documentation philosophy
-- **translations.py**: Translation card generation with parallel LLM calls (ThreadPoolExecutor) and in-memory caching for spaced repetition reviews
+- **translations.py**: Translation card generation with type-specific templates (NOUN/VERB/CHUNK/PREPOSITION/SENTENCE), parallel LLM calls (ThreadPoolExecutor, 50 workers), and in-memory caching for generated cards
 - **review_session.py**: Review session state machine managing card queue, current card state, and quality recording
-- **bot.py**: Telegram bot handler with message routing, callback query handling for review buttons, and user interaction
+- **bot.py**: Telegram bot handler with message routing, callback query handling for review buttons, multimodal photo handling, and daily conversation history reset
+- **bot_helpers.py**: UI formatting utilities — level display, quality names, callback data parsing
+- **message.py**: `UserMessage` dataclass for multimodal input (text + optional base64 JPEG)
 - **database.py**: Gzip-compressed JSON-based phrase storage with SM-2 spaced repetition and trigram similarity detection for duplicates
 - **dotenv.py**: Custom .env file parser that loads environment variables from a `.env` file, supporting quoted and unquoted values
 - **systemd.py**: Systemd integration using Type=notify protocol to signal service readiness via NOTIFY_SOCKET
 - **system_prompt.md**: Agent system prompt defining behavior, language routing rules, and tool usage guidelines
 
 **Agent Design Reference**: For principles of good agent design and tool calling patterns, see [Decoding Claude Code](https://minusx.ai/blog/decoding-claude-code/)
+
+### Key Architectural Decisions
+
+- **Dependency flow**: `main.py` wires `PhrasesDB` → `GermanLearningAgent` → `DeuBot`; no global state
+- **Agentic loop**: Agent iterates up to 10x per user message; each tool returns `needs_llm_followup` to signal whether the agent should continue reasoning
+- **Dual-model strategy**: Main model (`OPENAI_MODEL`) for the agent, light model (`OPENAI_LIGHT_MODEL`) for translation card generation
+- **Review state split**: Agent triggers review via tool call, bot manages the card-by-card UI flow independently
+- **Parallel LLM**: `ThreadPoolExecutor` (50 workers) for batch translation card generation
+- **Daily context reset**: Conversation history resets daily to avoid token bloat
 
 ### System Prompt vs Tool Descriptions
 

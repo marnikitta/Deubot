@@ -46,6 +46,34 @@ class TestNounCards:
         assert "hospital" in explanation_lower
         assert len(card.explanation) > 100
 
+    def test_noun_card_has_memory_tip(self, translation_service):
+        """Test that noun cards include a memory tip (💡)."""
+        card = translation_service.get_translation_card(
+            "1", "der Tisch", "the table", ReviewDirection.GERMAN_TO_ENGLISH
+        )
+        assert "💡" in card.explanation, f"Expected memory tip (💡) in noun card, got: {card.explanation[:400]}"
+
+    def test_noun_card_has_see_also(self, translation_service):
+        """Test that noun cards include a 'See also' section."""
+        card = translation_service.get_translation_card(
+            "1", "der Tisch", "the table", ReviewDirection.GERMAN_TO_ENGLISH
+        )
+        assert (
+            "see also" in card.explanation.lower()
+        ), f"Expected 'See also' section in noun card, got: {card.explanation[:400]}"
+
+    def test_noun_card_has_multiple_examples(self, translation_service):
+        """Test that noun cards include at least 4 numbered examples."""
+        import re
+
+        card = translation_service.get_translation_card(
+            "1", "der Tisch", "the table", ReviewDirection.GERMAN_TO_ENGLISH
+        )
+        numbered_lines = re.findall(r"\d+\.", card.explanation)
+        assert (
+            len(numbered_lines) >= 4
+        ), f"Expected at least 4 numbered examples, found {len(numbered_lines)} in: {card.explanation[:400]}"
+
     def test_compound_noun_shows_subwords(self, translation_service):
         """Test that compound nouns show breakdown into subwords."""
         card = translation_service.get_translation_card(
