@@ -18,7 +18,7 @@ def has_pronunciation_section(text: str) -> bool:
     # This captures the format: /IPA/ (approx) where IPA contains phonetic chars
     # and approx is a short English approximation
     pronunciation_pattern = re.compile(
-        r"pronunciation.*?/[^/]+/\s*\([A-Za-zÀ-ž][A-Za-zÀ-ž-]*\)", re.IGNORECASE | re.DOTALL
+        r"pronunciation.*?/[^/]+/\s*\([A-Za-zÀ-ž][A-Za-zÀ-ž \-]*\)", re.IGNORECASE | re.DOTALL
     )
     return bool(pronunciation_pattern.search(text))
 
