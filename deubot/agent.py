@@ -104,9 +104,8 @@ class GermanLearningAgent:
             if len(new_phrases) == 1:
                 user_message_parts.append(f"✓ Saved: <b>{escape_html(new_phrases[0])}</b>")
             else:
-                escaped_phrases = ", ".join(escape_html(p) for p in new_phrases[:5])
-                suffix = "..." if len(new_phrases) > 5 else ""
-                user_message_parts.append(f"✓ Saved {len(new_phrases)} phrases: <b>{escaped_phrases}</b>{suffix}")
+                escaped_phrases = ", ".join(escape_html(p) for p in new_phrases)
+                user_message_parts.append(f"✓ Saved {len(new_phrases)} phrases: <b>{escaped_phrases}</b>")
 
         if duplicate_phrases:
             for user_phrase, existing_phrase in duplicate_phrases:
@@ -128,7 +127,7 @@ class GermanLearningAgent:
 
         return ToolCallResult(
             result=result,
-            needs_llm_followup=True,
+            needs_llm_followup=len(new_phrases) <= 3,
             user_outputs=[MessageOutput(message=user_message)],
         )
 

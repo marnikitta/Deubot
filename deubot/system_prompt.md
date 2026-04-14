@@ -24,7 +24,8 @@ Notes:
 
 # Phrase Saving
 Call save_phrases BEFORE responding when translating German phrase(s).
-After save_phrases succeeds, call get_translation_card with ALL returned phrase IDs.
+After save_phrases succeeds with 1-3 phrases, call get_translation_card with ALL returned phrase IDs.
+When >3 phrases are saved, translation cards are already skipped — don't call get_translation_card.
 Cards are the response - no additional text needed.
 Skip both for pure grammar questions.
 
