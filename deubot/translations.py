@@ -50,10 +50,10 @@ NOUN:
 💡 [more tips if helpful, e.g. meaning tip]
 
 <b>Examples:</b>
-1. [German] - [English]
-2. [German] - [English]
-3. [German] - [English] (Akk/Dat/Perfekt)
-4. [German] - [English]
+1. [English] - [German]
+2. [English] - [German]
+3. [English] - [German] (Akk/Dat/Perfekt)
+4. [English] - [German]
 
 <b>See also:</b> [3-5 related words with translations]
 
@@ -68,11 +68,11 @@ Example for "der Tisch":
 💡 Sounds like English "dish" — a dish sits on a Tisch.
 
 <b>Examples:</b>
-1. Der Tisch ist groß. - The table is big.
-2. Ich sehe den Tisch. - I see the table. (Akk)
-3. Das Buch liegt auf dem Tisch. - The book is on the table. (Dat)
-4. Ich habe den Tisch gekauft. - I bought the table. (Perfekt)
-5. Stell die Tasse auf den Tisch! - Put the cup on the table! (Akk)
+1. The table is big. - Der Tisch ist groß.
+2. I see the table. - Ich sehe den Tisch. (Akk)
+3. The book is on the table. - Das Buch liegt auf dem Tisch. (Dat)
+4. I bought the table. - Ich habe den Tisch gekauft. (Perfekt)
+5. Put the cup on the table! - Stell die Tasse auf den Tisch! (Akk)
 
 <b>See also:</b> der Stuhl - chair, das Regal - shelf, die Lampe - lamp, der Schrank - cabinet
 
@@ -93,10 +93,10 @@ VERB - show conjugation for irregular/stem-changing, examples for regular:
 💡 [memory tip/tips]
 
 <b>Examples:</b>
-1. [German] - [English]
-2. [German] - [English]
-3. [German] - [English] (Perfekt/case variation)
-4. [German] - [English]
+1. [English] - [German]
+2. [English] - [German]
+3. [English] - [German] (Perfekt/case variation)
+4. [English] - [German]
 
 <b>See also:</b> [3-5 related verbs or antonyms with translations]
 
@@ -115,11 +115,11 @@ ich fahre, du f<b>ä</b>hrst, er/sie/es f<b>ä</b>hrt, wir fahren, ihr fahrt, si
 💡 Sounds like "far" — you fahren to go far.
 
 <b>Examples:</b>
-1. Ich fahre mit dem Bus. - I go by bus.
-2. Er fährt nach Berlin. - He drives to Berlin.
-3. Wir sind gestern gefahren. - We drove yesterday. (Perfekt)
-4. Fährst du mit dem Zug? - Are you going by train?
-5. Sie ist nach Hause gefahren. - She went home. (Perfekt)
+1. I go by bus. - Ich fahre mit dem Bus.
+2. He drives to Berlin. - Er fährt nach Berlin.
+3. We drove yesterday. - Wir sind gestern gefahren. (Perfekt)
+4. Are you going by train? - Fährst du mit dem Zug?
+5. She went home. - Sie ist nach Hause gefahren. (Perfekt)
 
 <b>See also:</b> laufen - to walk, fliegen - to fly, reisen - to travel, ankommen - to arrive
 
@@ -137,11 +137,11 @@ Regular: -e, -st, -t, -en, -t, -en
 💡 "Spiel" sounds like "spiel" in English (a speech/play).
 
 <b>Examples:</b>
-1. Die Kinder spielen im Garten. - The children play in the garden.
-2. Spielst du Fußball? - Do you play soccer?
-3. Ich habe gestern Klavier gespielt. - I played piano yesterday. (Perfekt)
-4. Er spielt mit dem Hund. - He plays with the dog. (Dat)
-5. Wir haben zusammen gespielt. - We played together. (Perfekt)
+1. The children play in the garden. - Die Kinder spielen im Garten.
+2. Do you play soccer? - Spielst du Fußball?
+3. I played piano yesterday. - Ich habe gestern Klavier gespielt. (Perfekt)
+4. He plays with the dog. - Er spielt mit dem Hund. (Dat)
+5. We played together. - Wir haben zusammen gespielt. (Perfekt)
 
 <b>See also:</b> üben - to practice, gewinnen - to win, verlieren - to lose, trainieren - to train
 
@@ -165,10 +165,10 @@ CHUNK (fixed phrase with ... or grammar baked in):
 - [variation 2] - [meaning]
 
 <b>Examples:</b>
-1. [German] - [English]
-2. [German] - [English]
-3. [German] - [English]
-4. [German] - [English]
+1. [English] - [German]
+2. [English] - [German]
+3. [English] - [German]
+4. [English] - [German]
 
 <b>See also:</b> [3-5 related phrases with translations]
 
@@ -187,14 +187,14 @@ Example for "Tut mir leid":
 💡 "Leid" sounds like "laid" — laid low with sorrow.
 
 <b>Variations:</b>
-- Es tut mir leid - I'm sorry (full form)
-- Tut mir sehr leid - I'm very sorry
+- I'm sorry (full form) - Es tut mir leid
+- I'm very sorry - Tut mir sehr leid
 
 <b>Examples:</b>
-1. Tut mir leid, ich bin spät. - I'm sorry, I'm late.
-2. Das tut mir leid. - I'm sorry about that.
-3. Es hat mir leidgetan. - I was sorry about it. (Perfekt)
-4. Tut mir leid, das wusste ich nicht. - I'm sorry, I didn't know that.
+1. I'm sorry, I'm late. - Tut mir leid, ich bin spät.
+2. I'm sorry about that. - Das tut mir leid.
+3. I was sorry about it. - Es hat mir leidgetan. (Perfekt)
+4. I'm sorry, I didn't know that. - Tut mir leid, das wusste ich nicht.
 
 <b>See also:</b> Entschuldigung - excuse me, Verzeihung - pardon, Macht nichts - no worries, Kein Problem - no problem
 
@@ -216,10 +216,10 @@ PREPOSITION:
 - [common use 2]: [example phrase]
 
 <b>Examples:</b>
-1. [German with article showing case] - [English]
-2. [German with article showing case] - [English]
-3. [German with article showing case] - [English]
-4. [German with article showing case] - [English]
+1. [English] - [German with article showing case]
+2. [English] - [German with article showing case]
+3. [English] - [German with article showing case]
+4. [English] - [German with article showing case]
 
 <b>See also:</b> [3-5 prepositions with same case + translations]
 
@@ -239,11 +239,11 @@ Example for "mit":
 - transport: mit dem Bus (by bus)
 
 <b>Examples:</b>
-1. Ich gehe mit <b>dem</b> Hund. - I go with the dog. (der→dem)
-2. Ich fahre mit <b>der</b> Bahn. - I go by train. (die→der)
-3. Ich habe mit <b>dem</b> Chef gesprochen. - I spoke with the boss. (Perfekt)
-4. Kommst du mit <b>uns</b>? - Are you coming with us?
-5. Er schreibt mit <b>einem</b> Kugelschreiber. - He writes with a pen.
+1. I go with the dog. - Ich gehe mit <b>dem</b> Hund. (der→dem)
+2. I go by train. - Ich fahre mit <b>der</b> Bahn. (die→der)
+3. I spoke with the boss. - Ich habe mit <b>dem</b> Chef gesprochen. (Perfekt)
+4. Are you coming with us? - Kommst du mit <b>uns</b>?
+5. He writes with a pen. - Er schreibt mit <b>einem</b> Kugelschreiber.
 
 <b>See also:</b> von - from (+Dat), nach - after/to (+Dat), bei - at/near (+Dat), zu - to (+Dat)
 
@@ -263,10 +263,10 @@ SENTENCE TEMPLATE:
 [Break down: Subject + Verb + TIME + MANNER + PLACE or similar]
 
 <b>Variations:</b>
-- [German variation] - [English]
-- [German variation] - [English]
-- [German variation] - [English]
-- [German variation] - [English]
+- [English] - [German variation]
+- [English] - [German variation]
+- [English] - [German variation]
+- [English] - [German variation]
 
 <b>See also:</b> [3-5 related phrases or patterns with translations]
 
@@ -284,10 +284,10 @@ German puts WHEN before HOW before WHERE (unlike English).
 Ich fahre + morgen (when) + mit dem Bus (how) + nach Berlin (where)
 
 <b>Variations:</b>
-- Morgen fahre ich nach Berlin. - Tomorrow I go to Berlin. (verb stays 2nd)
-- Ich fahre heute mit dem Zug nach München. - I go to Munich by train today.
-- Ich bin gestern mit dem Bus gefahren. - I went by bus yesterday. (Perfekt)
-- Wir fahren nächste Woche nach Hamburg. - We go to Hamburg next week.
+- Tomorrow I go to Berlin. - Morgen fahre ich nach Berlin. (verb stays 2nd)
+- I go to Munich by train today. - Ich fahre heute mit dem Zug nach München.
+- I went by bus yesterday. - Ich bin gestern mit dem Bus gefahren. (Perfekt)
+- We go to Hamburg next week. - Wir fahren nächste Woche nach Hamburg.
 
 <b>See also:</b> Ich gehe heute ins Kino - I'm going to the cinema today, Er kommt morgen nach Hause - He's coming home tomorrow
 """
