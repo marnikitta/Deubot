@@ -28,7 +28,7 @@ TYPE DETECTION:
 - SENTENCE: Complete sentence with subject + conjugated verb
 
 RULES:
-- Use HTML tags: <b>, <i> only
+- Use HTML tags: <b>, <i> only. NEVER use <br>, <br/>, <p>, <ul>, <li>, or any other tags — Telegram rejects them. For line breaks, use a real newline character, not <br>
 - Keep it dense – flashcard, not lecture
 - For compound nouns, show subword breakdown (e.g., Krankenhaus = krank + Haus)
 - 4-5 example sentences with translations. Vary grammar: use accusative (Akk), dative (Dat), and Perfekt (past tense) where natural
